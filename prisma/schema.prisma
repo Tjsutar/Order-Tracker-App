@@ -1,0 +1,66 @@
+generator client {
+  provider        = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id             String          @id @default(uuid())
+  name           String
+  email          String          @unique
+  role           String          // "ADMIN", "VENDOR", "CUSTOMER"
+  purchaseOrders     PurchaseOrder[] // For customers
+  emailNotifications Boolean         @default(true)
+  companyName        String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+}
+
+model PurchaseOrder {
+  id            String     @id @default(uuid())
+  poNumber      String     @unique
+  customerId    String
+  customer      User       @relation(fields: [customerId], references: [id])
+  poFile        String     // File path or URL
+  overallStatus String     @default("NEW") // "NEW", "PARTIALLY_COMPLETED", "COMPLETED", "ACTION_REQUIRED"
+  shipments     Shipment[]
+  uploadDate    DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Shipment {
+  id                String        @id @default(uuid())
+  poId              String
+  purchaseOrder     PurchaseOrder @relation(fields: [poId], references: [id])
+  shipmentNo        Int
+  invoiceNo         String?
+  invoicePdf        String?       // File path or URL
+  podPdf            String?       // File path or URL
+  status            String        @default("DRAFT") // "DRAFT", "INVOICE_UPLOADED", "POD_UPLOADED", "WAITING_CUSTOMER_APPROVAL", "ACCEPTED", "REJECTED"
+  customerRemarks   String?
+  visibleToCustomer Boolean       @default(false)
+  createdDate       DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model TrashItem {
+  id          String   @id @default(uuid())
+  entityType  String   // 'PO', 'SHIPMENT', 'DOCUMENT'
+  entityName  String   
+  filePaths   String   // JSON stringified array of file paths
+  deletedAt   DateTime @default(now())
+}
+
+model DemoDevice {
+  id            String   @id @default(uuid())
+  vendorId      String
+  customerEmail String
+  dcPdf         String   // Delivery Challan file path
+  podPdf        String   // Proof of Delivery file path
+  status        String   @default("SENT") // "SENT", "VIEWED"
+  linkToken     String   @unique @default(uuid()) // Secure unique URL token
+  createdAt     DateTime @default(now())
+}

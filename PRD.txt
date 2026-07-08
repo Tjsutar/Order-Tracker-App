@@ -1,0 +1,536 @@
+solving a very specific business problem: replacing manual email/OneDrive coordination with a controlled document workflow. For an MVP, I'd simplify it even further so you build the smallest system that delivers value.
+
+1. Core Problem
+
+Current Process
+
+Customer
+    ↓
+Sends PO
+    ↓
+Vendor stores in OneDrive
+    ↓
+Vendor creates Invoice
+    ↓
+Vendor dispatches goods
+    ↓
+Vendor uploads POD
+    ↓
+Customer emails/calls asking:
+    "Can you send Invoice?"
+    "Where is POD?"
+    "Is shipment complete?"
+
+Problems
+
+Documents scattered
+Multiple emails
+Wrong invoice sent
+Difficult PO tracking
+No approval workflow
+No audit trail
+2. MVP Goal
+
+The application should become a document workflow system, not an ERP.
+
+It only needs to answer three questions:
+
+Which PO?
+Which shipment belongs to that PO?
+Has customer accepted it?
+
+Nothing more.
+
+3. Domain Model
+
+I would structure the data like this.
+
+Customer
+
+    │
+
+    ├── PO
+    │      │
+    │      ├── Shipment 1
+    │      │      ├── Invoice
+    │      │      ├── POD
+    │      │      └── Approval Status
+    │      │
+    │      ├── Shipment 2
+    │      │      ├── Invoice
+    │      │      ├── POD
+    │      │      └── Approval Status
+    │      │
+    │      └── Shipment N
+
+Notice I replaced Invoice + POD with Shipment.
+
+This makes the model much cleaner.
+
+Each shipment has
+
+Invoice
+POD
+Status
+4. Entities
+Customer
+Customer
+---------
+Id
+Name
+Email
+Purchase Order
+PO
+
+Id
+PO Number
+CustomerId
+PO File
+Upload Date
+Overall Status
+Shipment
+Shipment
+
+Id
+PO Id
+Shipment No
+Invoice No
+Invoice PDF
+POD PDF
+Status
+Customer Remarks
+Hidden
+Created Date
+5. Shipment Status
+
+Instead of dozens of statuses
+
+Use only
+
+Draft
+
+Invoice Uploaded
+
+POD Uploaded
+
+Waiting Customer Approval
+
+Accepted
+
+Rejected
+
+Hidden
+
+Simple.
+
+6. Vendor Flow
+Upload PO
+
+↓
+
+System creates PO
+
+↓
+
+Add Shipment
+
+↓
+
+Upload Invoice
+
+↓
+
+Upload POD
+
+↓
+
+System marks
+
+Waiting Customer Approval
+
+↓
+
+Customer accepts
+
+↓
+
+Shipment Closed
+7. Customer Flow
+
+Customer Login
+
+↓
+
+See all POs
+
+↓
+
+Open PO
+
+↓
+
+Timeline
+
+↓
+
+Accept
+
+or
+
+Reject
+
+↓
+
+Reason
+
+↓
+
+Vendor gets notified
+
+8. Vendor Dashboard
+
+I would make it like this.
+
+PO-4587
+
+--------------------------------------
+
+Shipment 1
+
+Invoice.pdf
+
+POD.pdf
+
+Status
+Waiting Approval
+
+--------------------------------------
+
+Shipment 2
+
+Invoice.pdf
+
+POD.pdf
+
+Status
+Accepted
+
+[Hide from Customer]
+
+--------------------------------------
+
+Shipment 3
+
+Invoice.pdf
+
+POD Pending
+
+Status
+Preparing
+
+Instead of
+
+PO
+
+Invoice
+
+POD
+
+Status
+
+Invoice
+
+POD
+
+Status
+
+Treat every Invoice/POD pair as a Shipment card.
+
+Much easier.
+
+9. Customer Dashboard
+-------------------------------------------------
+
+PO Number
+
+Customer
+
+Status
+
+Shipment Count
+
+Download All
+
+-------------------------------------------------
+
+PO4587
+
+Open
+
+3
+
+Download
+
+-------------------------------------------------
+
+Open
+
+Shipment 1
+
+Invoice
+
+Download
+
+POD
+
+Download
+
+Status
+
+Accept
+
+Reject
+
+-----------------------------
+
+Shipment 2
+
+Invoice
+
+Download
+
+POD Pending
+
+-----------------------------
+10. Download Requirement
+
+Instead of
+
+Download Invoice
+
+Download POD
+
+Also provide
+
+Download Shipment
+
+
+which downloads
+
+Shipment1.zip
+
+Invoice.pdf
+
+POD.pdf
+
+Much more useful.
+
+Then another
+
+Download Entire PO
+
+
+which gives
+
+PO4587.zip
+
+PO.pdf
+
+Shipment1
+
+Invoice
+
+POD
+
+Shipment2
+
+Invoice
+
+POD
+11. Hidden Feature
+
+Current idea
+
+Hide from customer
+
+I would rename it
+
+Archive
+
+
+or
+
+Visible to Customer
+
+ON/OFF
+
+Because "Disable" sounds destructive.
+
+Internally
+
+VisibleToCustomer = true
+
+Cleaner.
+
+12. Approval Flow
+Vendor uploads
+
+↓
+
+Customer sees
+
+↓
+
+Accept
+
+↓
+
+Shipment Locked
+
+
+or
+
+Reject
+
+↓
+
+Reason Mandatory
+
+↓
+
+Vendor edits
+
+↓
+
+Uploads corrected file
+
+↓
+
+Approval resets
+
+This is an important missing flow.
+
+13. Notifications (MVP)
+
+Very simple.
+
+Vendor uploads
+
+↓
+
+Customer email
+
+New Shipment Uploaded
+
+Customer accepts
+
+↓
+
+Vendor email
+
+Shipment Accepted
+
+Customer rejects
+
+↓
+
+Vendor email
+
+Shipment Rejected
+Reason:
+14. User Roles
+
+Only three roles.
+
+Admin
+
+Vendor
+
+Customer
+
+Admin can
+
+Create users
+Assign customers
+Reset passwords
+
+Vendor
+
+Upload PO
+Upload Invoice
+Upload POD
+View status
+
+Customer
+
+View only
+Accept
+Reject
+Download
+15. Overall PO Status
+
+Instead of manually updating.
+
+Calculate automatically.
+
+Example
+
+PO has
+
+Shipment1 Accepted
+
+Shipment2 Accepted
+
+Shipment3 Waiting
+
+
+Overall
+
+Partially Completed
+
+Rules
+
+No Shipment
+
+↓
+
+New
+
+------------------
+
+Some Accepted
+
+↓
+
+Partially Completed
+
+------------------
+
+All Accepted
+
+↓
+
+Completed
+
+------------------
+
+Any Rejected
+
+↓
+
+Action Required
+16. Biggest Functional Gaps
+
+These are the questions I'd resolve before development:
+
+Gap	Recommendation
+Can one PO have multiple invoices?	Yes, model them as Shipments.
+Can one invoice have multiple PODs?	Decide now. Prefer one POD per Shipment for MVP.
+Can a rejected shipment be replaced?	Yes. Upload a new version and reset approval.
+Version history?	Keep previous files instead of overwriting.
+Can vendor edit after acceptance?	No. Require a new version to maintain auditability.
+Customer visibility	Use a VisibleToCustomer flag instead of deleting or disabling.
+File storage	Store files in OneDrive/Blob storage with metadata in the database.
+Notifications	Email only for MVP.
+Audit trail	Record every upload, approval, rejection, hide/show action with timestamp and user.
+Authentication	Role-based login (Vendor, Customer, Admin).
