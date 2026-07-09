@@ -1,0 +1,30 @@
+As a Senior Software Engineer reviewing this search implementation, I can tell you that while it functionally works for a small MVP, it is not production-ready and contains several architectural anti-patterns that will break at scale.
+
+Here is my technical code review of the current search functionality in vendor/page.tsx:
+
+1. Client-Side Filtering on Unpaginated Data (Critical Scalability Issue)
+Currently, your app fetches every single Purchase Order in the database via /api/pos into the client's browser memory, and then runs .filter() on the frontend.
+
+The Problem: Once your app scales to thousands of POs, this will cause massive API payloads (megabytes of JSON), out-of-memory browser crashes, and extremely slow initial page loads.
+The Google Standard: Search should be offloaded to the database. We should be using server-side pagination and search (e.g., hitting /api/pos?search=XYZ&page=1), utilizing PostgreSQL's native ILIKE or full-text search indexes to return only the 20 results the user actually needs to see.
+2. Missing Memoization (Performance Leak)
+tsx
+const filteredPOs = pos.filter(po => { ... })
+The Problem: Because this filtering logic sits directly in the component body, it recalculates the entire filtered list on every single render cycle.
+The Fix: It must be wrapped in a useMemo hook so that the expensive O(N * M) loop only runs when either pos or searchQuery actually changes:
+tsx
+const filteredPOs = useMemo(() => pos.filter(po => { ... }), [pos, searchQuery]);
+3. Missing Debounce (UX Stuttering)
+In VendorLayout.tsx, the searchQuery updates the state on every single keystroke:
+
+tsx
+const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  setSearchQuery(e.target.value)
+  onSearch(e.target.value)
+}
+The Problem: Because there is no debounce, typing "Invoice" rapidly triggers 7 back-to-back state updates. Combined with the missing memoization (Point 2) and deep nested array loops (.some()), typing in the search bar will feel incredibly laggy and stuttery for the user if they have more than a hundred POs.
+The Fix: We need to introduce a debounce (e.g., useDebounce(searchQuery, 300) hook) so the heavy filtering operation only kicks in 300ms after the user stops typing.
+Summary
+If you only have 50 POs, this code works fine. But for a real-world enterprise app, this is a ticking time bomb.
+
+Would you like me to implement a Debounce + useMemo fix to instantly patch the UX stuttering, or should we plan a larger refactor to push the search logic to the backend database API?

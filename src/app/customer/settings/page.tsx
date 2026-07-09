@@ -103,7 +103,7 @@ export default function CustomerSettingsDashboard() {
               <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
                 <div>
                   <p className="text-sm font-medium text-slate-800 dark:text-white">Email Notifications</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Receive emails when vendors update purchase orders.</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Receive emails when DDAPL updates purchase orders.</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input 

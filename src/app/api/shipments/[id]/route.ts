@@ -70,8 +70,17 @@ export async function PATCH(
         return NextResponse.json({ error: 'Type and files are required' }, { status: 400 })
       }
 
-      // Determine final filename based on the FIRST uploaded file
-      const firstFile = files[0]
+      // Sort files by sequence number at the end of the filename
+      const getTrailingSequence = (name: string) => {
+        const base = name.replace(/\.[^/.]+$/, "")
+        const match = base.match(/(\d+)$/)
+        return match ? parseInt(match[1], 10) : Infinity
+      }
+      
+      const sortedFiles = [...files].sort((a, b) => getTrailingSequence(a.name) - getTrailingSequence(b.name))
+
+      // Determine final filename based on the FIRST sorted file in sequence
+      const firstFile = sortedFiles[0]
       const originalName = firstFile.name
       const baseName = originalName.replace(/\.[^/.]+$/, "") // strip extension
       const finalFilename = `${baseName}_${type}.pdf` // e.g. INV-123_invoicePdf.pdf
@@ -91,7 +100,7 @@ export async function PATCH(
       // Merge PDFs
       const mergedPdf = await PDFDocument.create()
 
-      for (const file of files) {
+      for (const file of sortedFiles) {
         const arrayBuffer = await file.arrayBuffer()
 
         try {
@@ -106,8 +115,16 @@ export async function PATCH(
           } else {
             // Attempt to load as PDF
             const pdfDoc = await PDFDocument.load(arrayBuffer)
-            const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices())
-            copiedPages.forEach((page) => mergedPdf.addPage(page))
+            const seqNumber = getTrailingSequence(file.name)
+            
+            // If sequence number is exactly 1, only keep the first page
+            const pageIndices = seqNumber === 1 ? [0] : pdfDoc.getPageIndices()
+            
+            // Ensure we don't try to copy an out-of-bounds page (e.g., if the PDF is empty)
+            if (pdfDoc.getPageCount() > 0) {
+              const copiedPages = await mergedPdf.copyPages(pdfDoc, pageIndices)
+              copiedPages.forEach((page) => mergedPdf.addPage(page))
+            }
           }
         } catch (err) {
           console.error(`Failed to parse file ${file.name}:`, err)
@@ -124,8 +141,19 @@ export async function PATCH(
       const updateData: any = {}
       updateData[type] = filePath
 
-      if (type === 'invoicePdf') updateData.status = 'INVOICE_UPLOADED'
-      if (type === 'podPdf') updateData.status = 'WAITING_APPROVAL'
+      const currentShipment = await prisma.shipment.findUnique({ where: { id: params.id } })
+      
+      const hasInvoice = type === 'invoicePdf' ? true : !!currentShipment?.invoicePdf
+      const hasPod = type === 'podPdf' ? true : !!currentShipment?.podPdf
+
+      if (hasInvoice && hasPod) {
+        updateData.visibleToCustomer = true
+        updateData.status = 'WAITING_APPROVAL'
+      } else if (hasInvoice) {
+        updateData.status = 'INVOICE_UPLOADED'
+      } else if (hasPod) {
+        updateData.status = 'POD_UPLOADED'
+      }
 
       const shipment = await prisma.shipment.update({
         where: { id: params.id },

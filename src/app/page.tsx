@@ -7,6 +7,8 @@ export default function Home() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
+  const [customerIdInput, setCustomerIdInput] = useState('mock-customer-id-1')
+
   const handleLogin = (role: string, customerId?: string) => {
     setLoading(true)
     // Mock login by setting localStorage
@@ -18,8 +20,8 @@ export default function Home() {
     }
 
     // Redirect based on role
-    if (role === 'VENDOR') {
-      router.push('/vendor')
+    if (role === 'DDAPL') {
+      router.push('/ddapl')
     } else if (role === 'CUSTOMER') {
       router.push('/customer')
     } else if (role === 'ADMIN') {
@@ -31,7 +33,7 @@ export default function Home() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden border border-slate-100 dark:border-slate-700">
         <div className="p-8 text-center bg-gradient-to-br from-indigo-500 to-purple-600">
-          <h1 className="text-3xl font-bold text-white mb-2">Vendor-Cust Portal</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">DDAPL-Cust Portal</h1>
           <p className="text-indigo-100">Document Workflow System</p>
         </div>
         
@@ -39,22 +41,31 @@ export default function Home() {
           <div className="text-center">
             <h2 className="text-lg font-medium text-slate-700 dark:text-slate-200 mb-4">Select your role to continue</h2>
             
-            <div className="space-y-3">
+            <div className="space-y-4">
               <button 
-                onClick={() => handleLogin('VENDOR')}
+                onClick={() => handleLogin('DDAPL')}
                 disabled={loading}
                 className="w-full py-3 px-4 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold transition-colors duration-200"
               >
-                Log in as Vendor
+                Log in as DDAPL
               </button>
               
-              <button 
-                onClick={() => handleLogin('CUSTOMER', 'mock-customer-id-1')}
-                disabled={loading}
-                className="w-full py-3 px-4 flex items-center justify-center rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 font-semibold transition-colors duration-200"
-              >
-                Log in as Customer
-              </button>
+              <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                <input 
+                  type="text" 
+                  value={customerIdInput}
+                  onChange={(e) => setCustomerIdInput(e.target.value)}
+                  placeholder="Enter Customer ID"
+                  className="w-full px-3 py-2 mb-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white"
+                />
+                <button 
+                  onClick={() => handleLogin('CUSTOMER', customerIdInput)}
+                  disabled={loading || !customerIdInput}
+                  className="w-full py-3 px-4 flex items-center justify-center rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 font-semibold transition-colors duration-200 disabled:opacity-50"
+                >
+                  Log in as Customer
+                </button>
+              </div>
               
               <button 
                 onClick={() => handleLogin('ADMIN')}

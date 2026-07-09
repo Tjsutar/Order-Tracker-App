@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, LogOut, CheckCircle, XCircle, Download, File, RefreshCw, ExternalLink } from 'lucide-react'
+import { FileText, LogOut, CheckCircle, XCircle, Download, File, RefreshCw, ExternalLink, ChevronUp, ChevronDown } from 'lucide-react'
 import { Modal } from '@/components/Modal'
 import { StatusBadge } from '@/components/StatusBadge'
 import { CustomerLayout } from '@/components/CustomerLayout'
@@ -39,7 +39,12 @@ export default function CustomerDashboard() {
   })
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'ACTIVE' | 'COMPLETED'>('ACTIVE')
+  const [activeTab, setActiveTab] = useState<'ACTIVE' | 'ACTION_REQUIRED' | 'COMPLETED'>('ACTIVE')
+  const [expandedPOs, setExpandedPOs] = useState<Record<string, boolean>>({})
+
+  const togglePO = (poId: string) => {
+    setExpandedPOs(prev => ({ ...prev, [poId]: !prev[poId] }))
+  }
 
   const filteredPOs = pos.filter(po => {
     if (!searchQuery) return true;
@@ -53,10 +58,11 @@ export default function CustomerDashboard() {
     );
   })
 
-  const activePOs = filteredPOs.filter(po => po.overallStatus !== 'COMPLETED')
+  const activePOs = filteredPOs.filter(po => po.overallStatus !== 'COMPLETED' && po.overallStatus !== 'ACTION_REQUIRED')
   const completedPOs = filteredPOs.filter(po => po.overallStatus === 'COMPLETED')
+  const actionRequiredPOs = filteredPOs.filter(po => po.overallStatus === 'ACTION_REQUIRED')
   
-  const displayPOs = activeTab === 'ACTIVE' ? activePOs : completedPOs
+  const displayPOs = activeTab === 'ACTIVE' ? activePOs : activeTab === 'ACTION_REQUIRED' ? actionRequiredPOs : completedPOs
 
   useEffect(() => {
     const role = localStorage.getItem('userRole')
@@ -122,33 +128,37 @@ export default function CustomerDashboard() {
     </CustomerLayout>
   )
 
-  return (
-    <CustomerLayout onSearch={setSearchQuery}>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center">
-            <FileText className="w-6 h-6 mr-3 text-teal-500" /> My Purchase Orders
-          </h2>
-          <div className="flex bg-slate-100 dark:bg-slate-800/80 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
-            <button 
-              onClick={() => setActiveTab('ACTIVE')}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'ACTIVE' ? 'bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
-            >
-              Active ({activePOs.length})
-            </button>
-            <button 
-              onClick={() => setActiveTab('COMPLETED')}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'COMPLETED' ? 'bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
-            >
-              Completed ({completedPOs.length})
-            </button>
-          </div>
-        </div>
+  const actionToolbar = (
+    <div className="flex items-center gap-3 h-9">
+      <div className="h-full inline-flex p-1 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+        <button 
+          onClick={() => setActiveTab('ACTIVE')}
+          className={`h-full flex items-center justify-center px-4 rounded-md text-sm font-medium transition-colors ${activeTab === 'ACTIVE' ? 'bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+        >
+          Active ({activePOs.length})
+        </button>
+        <button 
+          onClick={() => setActiveTab('ACTION_REQUIRED')}
+          className={`h-full flex items-center justify-center px-4 rounded-md text-sm font-medium transition-colors ${activeTab === 'ACTION_REQUIRED' ? 'bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+        >
+          Action Required ({actionRequiredPOs.length})
+        </button>
+        <button 
+          onClick={() => setActiveTab('COMPLETED')}
+          className={`h-full flex items-center justify-center px-4 rounded-md text-sm font-medium transition-colors ${activeTab === 'COMPLETED' ? 'bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+        >
+          Completed ({completedPOs.length})
+        </button>
       </div>
+    </div>
+  )
 
-      <div className="space-y-8">
+  return (
+    <CustomerLayout onSearch={setSearchQuery} actionToolbar={actionToolbar}>
+
+      <div className="space-y-4">
         {displayPOs.map(po => {
-            const visibleShipments = po.shipments.filter(s => s.visibleToCustomer && s.status !== 'DRAFT')
+            const visibleShipments = po.shipments.filter(s => s.visibleToCustomer)
             
             return (
               <div key={po.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -157,7 +167,7 @@ export default function CustomerDashboard() {
                     <h3 className="text-xl font-bold text-slate-800 dark:text-white">{po.poNumber}</h3>
                     <p className="text-sm text-slate-500 mt-1">Status: <span className="font-semibold text-teal-600 dark:text-teal-400">{po.overallStatus.replace(/_/g, ' ')}</span></p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     <a 
                       href={`/api/files?path=${encodeURIComponent(po.poFile)}&view=true`}
                       target="_blank"
@@ -172,74 +182,89 @@ export default function CustomerDashboard() {
                     >
                       <Download className="w-4 h-4 mr-2" /> Download Entire PO
                     </a>
+                    <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                    <button onClick={() => togglePO(po.id)} className="text-slate-400 hover:text-teal-600 hover:bg-slate-100 dark:hover:bg-slate-700 p-1.5 rounded-full transition-colors flex items-center">
+                      {expandedPOs[po.id] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </button>
                   </div>
                 </div>
                 
+                {expandedPOs[po.id] && (
                 <div className="p-6">
                   {visibleShipments.length === 0 ? (
                     <p className="text-slate-400 text-sm italic py-4">No shipments visible for this PO yet.</p>
                   ) : (
-                    <div className="space-y-6">
-                      {visibleShipments.map(shipment => (
-                        <div key={shipment.id} className="border border-slate-200 dark:border-slate-700 rounded-lg p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-6 hover:shadow-md transition-shadow bg-white dark:bg-slate-800 relative overflow-hidden">
-                          {/* Left side: Info */}
-                          <div className="flex-1 space-y-4">
-                            <div className="flex items-center gap-3">
-                              <h4 className="font-bold text-lg text-slate-800 dark:text-white">Shipment {shipment.shipmentNo}</h4>
-                              <StatusBadge status={shipment.status} />
-                            </div>
-                            
-                            <div className="flex gap-4">
-                              {shipment.invoicePdf && (
-                                <a href={`/api/files?path=${encodeURIComponent(shipment.invoicePdf)}&view=true`} target="_blank" className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors">
-                                  <File className="w-4 h-4 mr-1.5" /> Invoice <ExternalLink className="w-3 h-3 ml-1" />
-                                </a>
-                              )}
-                              {shipment.podPdf && (
-                                <a href={`/api/files?path=${encodeURIComponent(shipment.podPdf)}&view=true`} target="_blank" className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors">
-                                  <File className="w-4 h-4 mr-1.5" /> POD <ExternalLink className="w-3 h-3 ml-1" />
-                                </a>
-                              )}
-                            </div>
-                            
-                            {shipment.status === 'REJECTED' && shipment.customerRemarks && (
-                              <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-3 rounded-md text-sm border border-red-100 dark:border-red-800/30">
-                                <strong>Reason for rejection:</strong> {shipment.customerRemarks}
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* Right side: Actions */}
-                          <div className="flex flex-col sm:flex-row gap-3 min-w-max border-t lg:border-t-0 pt-4 lg:pt-0 border-slate-100 dark:border-slate-700">
-                            {shipment.status === 'WAITING_APPROVAL' && (
-                              <>
-                                <button 
-                                  onClick={() => handleAction(shipment.id, 'ACCEPTED')}
-                                  className="flex-1 lg:flex-none justify-center flex items-center bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors"
-                                >
-                                  <CheckCircle className="w-4 h-4 mr-2" /> Accept
-                                </button>
-                                <button 
-                                  onClick={() => setRejectModalState({ isOpen: true, shipmentId: shipment.id, reason: '' })}
-                                  className="flex-1 lg:flex-none justify-center flex items-center bg-white dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 px-5 py-2.5 rounded-lg font-medium transition-colors"
-                                >
-                                  <XCircle className="w-4 h-4 mr-2" /> Reject
-                                </button>
-                              </>
-                            )}
-                            <a 
-                              href={`/api/shipments/${shipment.id}/download`}
-                              download
-                              className="flex-1 lg:flex-none justify-center flex items-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-5 py-2.5 rounded-lg font-medium transition-colors"
-                            >
-                              <Download className="w-4 h-4 mr-2" /> Download
-                            </a>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                      <table className="w-full text-left text-sm whitespace-nowrap">
+                        <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-700">
+                          <tr>
+                            <th className="px-6 py-3">Shipment No.</th>
+                            <th className="px-6 py-3">Status</th>
+                            <th className="px-6 py-3">Documents</th>
+                            <th className="px-6 py-3 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 bg-white dark:bg-slate-800">
+                          {visibleShipments.map(shipment => (
+                            <tr key={shipment.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
+                              <td className="px-6 py-3 font-bold text-slate-800 dark:text-white">
+                                Shipment {shipment.shipmentNo}
+                              </td>
+                              <td className="px-6 py-3">
+                                <StatusBadge status={shipment.status} />
+                                {shipment.status === 'REJECTED' && shipment.customerRemarks && (
+                                  <p className="mt-2 text-xs text-red-600 font-medium truncate max-w-[200px]" title={shipment.customerRemarks}>Reason: {shipment.customerRemarks}</p>
+                                )}
+                              </td>
+                              <td className="px-6 py-3">
+                                <div className="flex flex-col gap-2">
+                                  {shipment.invoicePdf && (
+                                    <a href={`/api/files?path=${encodeURIComponent(shipment.invoicePdf)}&view=true`} target="_blank" className="inline-flex w-fit items-center px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 border border-indigo-100 dark:border-indigo-800/60 rounded-md text-sm text-indigo-700 dark:text-indigo-300 font-medium transition-colors shadow-sm">
+                                      <File className="w-4 h-4 mr-1.5" /> Invoice <ExternalLink className="w-3 h-3 ml-1.5 opacity-70" />
+                                    </a>
+                                  )}
+                                  {shipment.podPdf && (
+                                    <a href={`/api/files?path=${encodeURIComponent(shipment.podPdf)}&view=true`} target="_blank" className="inline-flex w-fit items-center px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 border border-indigo-100 dark:border-indigo-800/60 rounded-md text-sm text-indigo-700 dark:text-indigo-300 font-medium transition-colors shadow-sm">
+                                      <File className="w-4 h-4 mr-1.5" /> POD <ExternalLink className="w-3 h-3 ml-1.5 opacity-70" />
+                                    </a>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-6 py-3 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  {shipment.status === 'WAITING_APPROVAL' && (
+                                    <>
+                                      <button 
+                                        onClick={() => handleAction(shipment.id, 'ACCEPTED')}
+                                        className="flex items-center bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md font-medium shadow-sm transition-colors text-xs"
+                                      >
+                                        <CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Accept
+                                      </button>
+                                      <button 
+                                        onClick={() => setRejectModalState({ isOpen: true, shipmentId: shipment.id, reason: '' })}
+                                        className="flex items-center bg-white dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 px-3 py-1.5 rounded-md font-medium transition-colors text-xs"
+                                      >
+                                        <XCircle className="w-3.5 h-3.5 mr-1.5" /> Reject
+                                      </button>
+                                    </>
+                                  )}
+                                  <a 
+                                    href={`/api/shipments/${shipment.id}/download`}
+                                    download
+                                    className="flex items-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-md font-medium transition-colors text-xs"
+                                  >
+                                    <Download className="w-3.5 h-3.5 mr-1.5" /> Download
+                                  </a>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   )}
                 </div>
+                )}
               </div>
             )
           })}
@@ -247,10 +272,10 @@ export default function CustomerDashboard() {
             <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 border-dashed">
               <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-slate-900 dark:text-white">
-                {searchQuery ? `No ${activeTab === 'ACTIVE' ? 'Active' : 'Completed'} Purchase Orders match your search` : `No ${activeTab === 'ACTIVE' ? 'Active' : 'Completed'} Purchase Orders yet`}
+                {searchQuery ? `No ${activeTab === 'ACTIVE' ? 'Active' : activeTab === 'ACTION_REQUIRED' ? 'Action Required' : 'Completed'} Purchase Orders match your search` : `No ${activeTab === 'ACTIVE' ? 'Active' : activeTab === 'ACTION_REQUIRED' ? 'Action Required' : 'Completed'} Purchase Orders yet`}
               </h3>
               <p className="text-slate-500 mt-1">
-                {searchQuery ? 'Try adjusting your search terms.' : activeTab === 'ACTIVE' ? 'Waiting for vendors to create new POs.' : 'Completed POs will appear here.'}
+                {searchQuery ? 'Try adjusting your search terms.' : activeTab === 'ACTIVE' ? 'Waiting for DDAPL to create new POs.' : activeTab === 'ACTION_REQUIRED' ? 'POs needing your approval will appear here.' : 'Completed POs will appear here.'}
               </p>
             </div>
           )}

@@ -18,7 +18,7 @@ export async function GET(request: Request) {
         orderBy: { uploadDate: 'desc' }
       })
     } else {
-      // VENDOR or ADMIN can see all POs
+      // DDAPL or ADMIN can see all POs
       pos = await prisma.purchaseOrder.findMany({
         include: { 
           shipments: true,

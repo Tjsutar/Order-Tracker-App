@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Smartphone, Plus, UploadCloud, RefreshCw, Send, CheckCircle, ExternalLink, Trash2 } from 'lucide-react'
-import { VendorLayout } from '@/components/VendorLayout'
+import { DdaplLayout } from '@/components/DdaplLayout'
 import { Modal } from '@/components/Modal'
 
 type DemoDevice = {
@@ -31,7 +31,7 @@ export default function DemoDevicesDashboard() {
 
   useEffect(() => {
     const role = localStorage.getItem('userRole')
-    if (role !== 'VENDOR' && role !== 'ADMIN') {
+    if (role !== 'DDAPL' && role !== 'ADMIN') {
       router.push('/')
       return
     }
@@ -99,22 +99,22 @@ export default function DemoDevicesDashboard() {
     return d.customerEmail.toLowerCase().includes(q) || d.status.toLowerCase().includes(q)
   })
 
+  const actionToolbar = (
+    <div className="flex items-center gap-3 h-9">
+      <button onClick={() => setIsModalOpen(true)} className="h-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 rounded-lg text-sm font-medium transition-colors shadow-sm">
+        <Plus className="w-4 h-4 mr-1.5" /> Send New Demo
+      </button>
+    </div>
+  )
+
   return (
-    <VendorLayout onSearch={setSearchQuery}>
+    <DdaplLayout onSearch={setSearchQuery} actionToolbar={actionToolbar}>
       {loading ? (
         <div className="flex-1 flex items-center justify-center min-h-[60vh]">
           <RefreshCw className="animate-spin text-indigo-500 w-8 h-8" />
         </div>
       ) : (
-        <div className="max-w-7xl mx-auto py-8 w-full">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center">
-            <Smartphone className="w-6 h-6 mr-3 text-indigo-500" /> Demo Devices
-          </h2>
-          <button onClick={() => setIsModalOpen(true)} className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium shadow-md shadow-indigo-200 transition-all">
-            <Plus className="w-4 h-4 mr-2" /> Send New Demo
-          </button>
-        </div>
+        <div className="w-full">
 
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
           {filteredDemos.length === 0 ? (
@@ -245,6 +245,6 @@ export default function DemoDevicesDashboard() {
         </div>
       </Modal>
 
-    </VendorLayout>
+    </DdaplLayout>
   )
 }

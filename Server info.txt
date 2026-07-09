@@ -1,0 +1,30 @@
+=============================================
+ Order Tracker - Windows Server Readiness Check
+=============================================
+
+[1/5] Checking Memory (RAM)...
+  Total RAM: 7.96 GB
+  Free RAM:  2.64 GB
+  [OK] RAM is sufficient.
+
+[2/5] Checking CPU...
+  CPU: AMD EPYC 7763 64-Core Processor
+  Logical Cores: 3
+  [OK] CPU is sufficient.
+
+[3/5] Checking Disk Space (C: Drive)...
+  Total Space: 149.32 GB
+  Free Space:  56.39 GB
+  [OK] Disk space is sufficient.
+
+[4/5] Checking Node.js Dependencies...
+  [OK] Node.js is installed: v24.15.0
+  [OK] NPM is installed: v11.12.1
+
+[5/5] Checking PostgreSQL Database...
+  [OK] PostgreSQL Service found: postgresql-x64-17 (Running)
+
+=============================================
+ Check Complete!
+=============================================
+Press any key to exit...

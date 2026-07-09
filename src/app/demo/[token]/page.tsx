@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, use } from 'react'
-import { FileText, CheckCircle, Smartphone, ExternalLink, RefreshCw, AlertCircle } from 'lucide-react'
+import { FileText, CheckCircle, Smartphone, ExternalLink, RefreshCw, AlertCircle, XCircle } from 'lucide-react'
 
 type DemoDevice = {
   id: string
@@ -48,10 +48,10 @@ export default function PublicDemoPage(props: { params: Promise<{ token: string 
   if (error || !demo) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-100 max-w-md w-full text-center">
-          <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">Link Unavailable</h1>
-          <p className="text-slate-500">{error || 'This secure link is invalid, expired, or has been revoked by the vendor.'}</p>
+        <div className="text-center p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-xl">
+          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Access Denied</h2>
+          <p className="text-slate-500">{error || 'This secure link is invalid, expired, or has been revoked by DDAPL.'}</p>
         </div>
       </div>
     )

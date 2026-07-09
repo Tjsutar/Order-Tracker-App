@@ -3,15 +3,37 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  DDAPL
+  CUSTOMER
+}
+
+enum POStatus {
+  NEW
+  PARTIALLY_COMPLETED
+  COMPLETED
+  ACTION_REQUIRED
+}
+
+enum ShipmentStatus {
+  DRAFT
+  INVOICE_UPLOADED
+  POD_UPLOADED
+  WAITING_APPROVAL
+  ACCEPTED
+  REJECTED
 }
 
 model User {
-  id             String          @id @default(uuid())
-  name           String
-  email          String          @unique
-  role           String          // "ADMIN", "VENDOR", "CUSTOMER"
+  id                 String          @id @default(uuid())
+  name               String
+  email              String          @unique
+  role               Role            @default(CUSTOMER)
   purchaseOrders     PurchaseOrder[] // For customers
   emailNotifications Boolean         @default(true)
   companyName        String?
@@ -25,10 +47,13 @@ model PurchaseOrder {
   customerId    String
   customer      User       @relation(fields: [customerId], references: [id])
   poFile        String     // File path or URL
-  overallStatus String     @default("NEW") // "NEW", "PARTIALLY_COMPLETED", "COMPLETED", "ACTION_REQUIRED"
+  overallStatus POStatus   @default(NEW)
   shipments     Shipment[]
   uploadDate    DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
+
+  @@index([customerId])
+  @@index([overallStatus])
 }
 
 model Shipment {
@@ -39,11 +64,14 @@ model Shipment {
   invoiceNo         String?
   invoicePdf        String?       // File path or URL
   podPdf            String?       // File path or URL
-  status            String        @default("DRAFT") // "DRAFT", "INVOICE_UPLOADED", "POD_UPLOADED", "WAITING_CUSTOMER_APPROVAL", "ACCEPTED", "REJECTED"
+  status            ShipmentStatus @default(DRAFT)
   customerRemarks   String?
   visibleToCustomer Boolean       @default(false)
   createdDate       DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
+
+  @@index([poId])
+  @@index([status])
 }
 
 model TrashItem {
@@ -56,11 +84,25 @@ model TrashItem {
 
 model DemoDevice {
   id            String   @id @default(uuid())
-  vendorId      String
+  ddaplId       String
   customerEmail String
   dcPdf         String   // Delivery Challan file path
   podPdf        String   // Proof of Delivery file path
   status        String   @default("SENT") // "SENT", "VIEWED"
   linkToken     String   @unique @default(uuid()) // Secure unique URL token
   createdAt     DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  entityType  String   // "PurchaseOrder", "Shipment", etc.
+  entityId    String
+  action      String   // "CREATED", "UPDATED", "DELETED"
+  oldValue    String?
+  newValue    String?
+  userId      String?  // ID of the user performing the action
+  createdAt   DateTime @default(now())
+
+  @@index([entityId])
+  @@index([entityType, entityId])
 }

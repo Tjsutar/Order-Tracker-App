@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Settings, User, Bell, Building, Save, CheckCircle } from 'lucide-react'
-import { VendorLayout } from '@/components/VendorLayout'
+import { DdaplLayout } from '@/components/DdaplLayout'
 
 export default function SettingsDashboard() {
   const router = useRouter()
@@ -12,15 +12,15 @@ export default function SettingsDashboard() {
 
   // Mock settings state
   const [settings, setSettings] = useState({
-    name: 'Vendor User',
-    email: 'vendor@example.com',
+    name: 'DDAPL User',
+    email: 'ddapl@example.com',
     companyName: 'Acme Corp Logistics',
     emailNotifications: true
   })
 
   useEffect(() => {
     const role = localStorage.getItem('userRole')
-    if (role !== 'VENDOR' && role !== 'ADMIN') {
+    if (role !== 'DDAPL' && role !== 'ADMIN') {
       router.push('/')
       return
     }
@@ -39,7 +39,7 @@ export default function SettingsDashboard() {
   }
 
   return (
-    <VendorLayout>
+    <DdaplLayout>
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center">
@@ -132,6 +132,6 @@ export default function SettingsDashboard() {
           </form>
         </div>
       </div>
-    </VendorLayout>
+    </DdaplLayout>
   )
 }

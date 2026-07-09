@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
     const demo = await prisma.demoDevice.create({
       data: {
-        vendorId: 'mock-vendor-id', // In real app, get from session
+        ddaplId: 'mock-ddapl-id', // In real app, get from session
         customerEmail,
         dcPdf: dcPath,
         podPdf: podPath,
