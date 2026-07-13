@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import bcrypt from 'bcrypt'
 
 export async function GET() {
   try {
@@ -16,10 +17,10 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, email, role, companyName, id } = body
+    const { name, email, role, companyName, id, password } = body
 
-    if (!name || !email) {
-      return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
+    if (!name || !email || !password) {
+      return NextResponse.json({ error: 'Name, email, and password are required' }, { status: 400 })
     }
 
     const userRole = role || 'CUSTOMER'
@@ -33,9 +34,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User with this email already exists' }, { status: 400 })
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10)
+
     const data: any = {
       name,
       email,
+      password: hashedPassword,
       role: userRole,
       companyName,
     }

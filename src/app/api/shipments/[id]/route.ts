@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { POStatus } from '@prisma/client'
 import { PDFDocument } from 'pdf-lib'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
@@ -85,17 +86,16 @@ export async function PATCH(
       const baseName = originalName.replace(/\.[^/.]+$/, "") // strip extension
       const finalFilename = `${baseName}_${type}.pdf` // e.g. INV-123_invoicePdf.pdf
 
-      // Prepare OneDrive path
-      const homeDir = os.homedir()
-      const onedrivePath = process.env.ONEDRIVE_PATH || path.join(homeDir, 'OneDrive', 'Shared_POs')
+      // Prepare private storage path
+      const storagePath = path.join(process.cwd(), 'storage', 'uploads')
 
       try {
-        await mkdir(onedrivePath, { recursive: true })
+        await mkdir(storagePath, { recursive: true })
       } catch (err) {
         console.error('Could not create directory:', err)
       }
 
-      const filePath = path.join(onedrivePath, finalFilename)
+      const filePath = path.join(storagePath, finalFilename)
 
       // Merge PDFs
       const mergedPdf = await PDFDocument.create()
@@ -213,7 +213,7 @@ async function updatePOOverallStatus(poId: string) {
   const anyRejected = shipments.some(s => s.status === 'REJECTED')
   const someAccepted = shipments.some(s => s.status === 'ACCEPTED')
 
-  let newStatus = 'NEW'
+  let newStatus: POStatus = 'NEW'
   if (anyRejected) {
     newStatus = 'ACTION_REQUIRED'
   } else if (allAccepted) {

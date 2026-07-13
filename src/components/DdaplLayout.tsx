@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { Search, LogOut, Home, History, Settings, Smartphone, Trash2, Sun, Moon, User } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useState as useReactState } from 'react'
+import { signOut, useSession } from 'next-auth/react'
 
 export function DdaplLayout({ children, onSearch, onOpenTrash, fullWidth = false, actionToolbar }: { children: React.ReactNode, onSearch?: (query: string) => void, onOpenTrash?: () => void, fullWidth?: boolean, actionToolbar?: React.ReactNode }) {
   const router = useRouter()
@@ -14,12 +15,14 @@ export function DdaplLayout({ children, onSearch, onOpenTrash, fullWidth = false
   const currentTheme = theme === 'system' ? resolvedTheme : theme
   const [mounted, setMounted] = useReactState(false)
 
-  // Avoid hydration mismatch by waiting for mount
-  useEffect(() => setMounted(true), [])
+  const { data: session, status } = useSession()
 
-  const handleLogout = () => {
-    localStorage.clear()
-    router.push('/')
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/' })
   }
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,14 +34,13 @@ export function DdaplLayout({ children, onSearch, onOpenTrash, fullWidth = false
 
   const navItems = [
     { label: 'Dashboard', path: '/ddapl', icon: Home },
-    { label: 'Demo Devices', path: '/ddapl/demo-devices', icon: Smartphone },
     { label: 'History', path: '/ddapl/history', icon: History },
     { label: 'Settings', path: '/ddapl/settings', icon: Settings },
   ]
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans flex flex-col">
-      <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
+    <div className="h-screen overflow-hidden bg-slate-50 dark:bg-slate-900 font-sans flex flex-col">
+      <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10 flex-shrink-0">
         <div className={`${fullWidth ? 'w-full' : 'max-w-7xl mx-auto'} px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 transition-all duration-300`}>
           <div className="flex items-center space-x-3 w-full sm:w-auto">
             <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center font-bold text-xl">D</div>
@@ -125,7 +127,7 @@ export function DdaplLayout({ children, onSearch, onOpenTrash, fullWidth = false
         </div>
       </header>
 
-      <main className={`flex-1 w-full ${fullWidth ? '' : 'max-w-7xl mx-auto'} px-4 sm:px-6 lg:px-8 py-8 transition-all duration-300`}>
+      <main className={`flex-1 overflow-y-auto w-full ${fullWidth ? '' : 'max-w-7xl mx-auto'} px-4 sm:px-6 lg:px-8 py-8 transition-all duration-300`}>
         {children}
       </main>
     </div>

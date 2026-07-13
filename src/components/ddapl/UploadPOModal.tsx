@@ -1,17 +1,39 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { UploadCloud } from 'lucide-react'
 import { Modal } from '@/components/Modal'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button } from '@/components/ui/Button'
+import { Label } from '@/components/ui/Label'
+import { Select } from '@/components/ui/Select'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 export function UploadPOModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('')
   const queryClient = useQueryClient()
+
+  // Fetch customers
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const res = await fetch('/api/users')
+      if (!res.ok) throw new Error('Failed to fetch users')
+      return res.json()
+    }
+  })
+
+  const customers = users.filter((u: any) => u.role === 'CUSTOMER')
+
+  useEffect(() => {
+    if (customers.length === 1 && !selectedCustomerId) {
+      setSelectedCustomerId(customers[0].id)
+    }
+  }, [customers, selectedCustomerId])
 
   const createPOMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('customerId', 'mock-customer-id-1') // Mock
+      formData.append('customerId', selectedCustomerId)
       
       const res = await fetch('/api/pos', {
         method: 'POST',
@@ -24,6 +46,7 @@ export function UploadPOModal({ isOpen, onClose }: { isOpen: boolean, onClose: (
       queryClient.invalidateQueries({ queryKey: ['pos'] })
       onClose()
       setUploadFile(null)
+      setSelectedCustomerId('')
     }
   })
 
@@ -31,7 +54,26 @@ export function UploadPOModal({ isOpen, onClose }: { isOpen: boolean, onClose: (
     <Modal isOpen={isOpen} onClose={onClose} title="Upload New Purchase Order">
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Upload PO Document (PDF or Image)</label>
+          <Label className="mb-2 block">Customer <span className="text-red-500">*</span></Label>
+          {customers.length === 1 ? (
+            <div className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 cursor-not-allowed">
+              {customers[0].name} ({customers[0].email})
+            </div>
+          ) : (
+            <Select 
+              value={selectedCustomerId}
+              onChange={(e) => setSelectedCustomerId(e.target.value)}
+            >
+              <option value="" disabled>Select a customer...</option>
+              {customers.map((c: any) => (
+                <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
+              ))}
+            </Select>
+          )}
+        </div>
+        
+        <div>
+          <Label className="mb-2 block">Upload PO Document (PDF or Image) <span className="text-red-500">*</span></Label>
           <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer relative">
             <input 
               type="file" 
@@ -48,14 +90,13 @@ export function UploadPOModal({ isOpen, onClose }: { isOpen: boolean, onClose: (
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">The PO Number will be automatically extracted from the filename.</p>
         </div>
         <div className="flex justify-end pt-4">
-          <button 
+          <Button 
             onClick={() => { if (uploadFile) createPOMutation.mutate(uploadFile) }} 
-            disabled={!uploadFile || createPOMutation.isPending} 
-            className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center"
+            disabled={!uploadFile || !selectedCustomerId || createPOMutation.isPending} 
           >
             <UploadCloud className="w-4 h-4 mr-2" /> 
             {createPOMutation.isPending ? 'Uploading...' : 'Upload PO'}
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

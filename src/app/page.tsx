@@ -1,31 +1,62 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Label } from '@/components/ui/Label'
+
+import { Eye, EyeOff } from 'lucide-react'
 
 export default function Home() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const { data: session, status } = useSession()
 
-  const [customerIdInput, setCustomerIdInput] = useState('mock-customer-id-1')
-
-  const handleLogin = (role: string, customerId?: string) => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
     setLoading(true)
-    // Mock login by setting localStorage
-    localStorage.setItem('userRole', role)
-    if (customerId) {
-      localStorage.setItem('customerId', customerId)
-    } else {
-      localStorage.removeItem('customerId')
-    }
 
-    // Redirect based on role
-    if (role === 'DDAPL') {
-      router.push('/ddapl')
-    } else if (role === 'CUSTOMER') {
-      router.push('/customer')
-    } else if (role === 'ADMIN') {
-      router.push('/admin')
+    try {
+      const res = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
+
+      if (res?.error) {
+        toast.error(res.error)
+        setLoading(false)
+        return
+      }
+
+      // NextAuth automatically creates a session cookie.
+      // The middleware or layouts will handle role-based redirection,
+      // but for immediate feedback, we fetch the session to know where to redirect.
+      const sessionRes = await fetch('/api/auth/session')
+      const sessionData = await sessionRes.json()
+
+      // Break loop: Only redirect if role is explicitly known
+      const role = sessionData?.user?.role || (sessionData?.user as any)?.role;
+      if (role === 'ADMIN') {
+        window.location.href = '/admin'
+      } else if (role === 'DDAPL') {
+        window.location.href = '/ddapl'
+      } else if (role === 'CUSTOMER') {
+        window.location.href = '/customer'
+      } else {
+        // If role is missing, don't redirect so we can see the error!
+        toast.error('Login succeeded but role is missing from session.')
+        setLoading(false)
+      }
+    } catch (err) {
+      toast.error('An unexpected error occurred')
+      setLoading(false)
     }
   }
 
@@ -33,55 +64,59 @@ export default function Home() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden border border-slate-100 dark:border-slate-700">
         <div className="p-8 text-center bg-gradient-to-br from-indigo-500 to-purple-600">
-          <h1 className="text-3xl font-bold text-white mb-2">DDAPL-Cust Portal</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Order Tracker</h1>
           <p className="text-indigo-100">Document Workflow System</p>
         </div>
         
         <div className="p-8 space-y-6">
-          <div className="text-center">
-            <h2 className="text-lg font-medium text-slate-700 dark:text-slate-200 mb-4">Select your role to continue</h2>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="text-xs text-slate-500 break-words">
+              Session Debug: {JSON.stringify(session)}
+            </div>
             
-            <div className="space-y-4">
-              <button 
-                onClick={() => handleLogin('DDAPL')}
-                disabled={loading}
-                className="w-full py-3 px-4 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold transition-colors duration-200"
-              >
-                Log in as DDAPL
-              </button>
-              
-              <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
-                <input 
-                  type="text" 
-                  value={customerIdInput}
-                  onChange={(e) => setCustomerIdInput(e.target.value)}
-                  placeholder="Enter Customer ID"
-                  className="w-full px-3 py-2 mb-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white"
+            <div>
+              <Label className="mb-1.5 block">Email</Label>
+              <Input 
+                type="email" 
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <div>
+              <Label className="mb-1.5 block">Password</Label>
+              <div className="relative">
+                <Input 
+                  type={showPassword ? "text" : "password"} 
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10"
                 />
-                <button 
-                  onClick={() => handleLogin('CUSTOMER', customerIdInput)}
-                  disabled={loading || !customerIdInput}
-                  className="w-full py-3 px-4 flex items-center justify-center rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 font-semibold transition-colors duration-200 disabled:opacity-50"
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 >
-                  Log in as Customer
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              
-              <button 
-                onClick={() => handleLogin('ADMIN')}
-                disabled={loading}
-                className="w-full py-3 px-4 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 font-semibold transition-colors duration-200"
-              >
-                Log in as Admin
-              </button>
             </div>
-          </div>
+            
+            <Button 
+              type="submit"
+              disabled={loading}
+              className="w-full mt-2"
+              size="lg"
+            >
+              {loading ? 'Authenticating...' : 'Sign In'}
+            </Button>
+          </form>
         </div>
       </div>
-      
-      <p className="mt-8 text-sm text-slate-500 text-center max-w-md">
-        This is an MVP mock login. In the final version, this will be replaced with real authentication.
-      </p>
     </div>
   )
 }

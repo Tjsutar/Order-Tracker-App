@@ -1,24 +1,44 @@
 import { NextResponse } from 'next/server'
 import { readFile, stat } from 'fs/promises'
 import path from 'path'
-import os from 'os'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+
+import { prisma } from '@/lib/prisma'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const filePath = searchParams.get('path')
+  const demoToken = searchParams.get('demoToken')
 
   if (!filePath) {
     return NextResponse.json({ error: 'File path is required' }, { status: 400 })
   }
 
+  // Standard authenticated access
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Verify path exists in the database
+  const [po, shipmentInvoice, shipmentPod] = await Promise.all([
+    prisma.purchaseOrder.findFirst({ where: { poFile: filePath } }),
+    prisma.shipment.findFirst({ where: { invoicePdf: filePath } }),
+    prisma.shipment.findFirst({ where: { podPdf: filePath } })
+  ]);
+
+  if (!po && !shipmentInvoice && !shipmentPod) {
+    return NextResponse.json({ error: 'Access denied: File not found in records' }, { status: 403 })
+  }
+
   try {
     // Basic security check: ensure it's a file path we expect
     // Resolve the intended base directory
-    const homeDir = os.homedir()
-    const onedrivePath = process.env.ONEDRIVE_PATH || path.join(homeDir, 'OneDrive', 'Shared_POs')
+    const storagePath = path.join(process.cwd(), 'storage', 'uploads')
     
     // Normalize and resolve both paths to absolute paths
-    const resolvedBase = path.resolve(onedrivePath)
+    const resolvedBase = path.resolve(storagePath)
     const resolvedTarget = path.resolve(filePath)
     
     // Prevent directory traversal attacks

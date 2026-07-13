@@ -14,6 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 import ReactQueryProvider from "@/components/ReactQueryProvider";
+import { AuthProvider } from "@/components/AuthProvider";
+import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -33,9 +35,12 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ReactQueryProvider>
-          <ThemeProvider>
-            {children}
-          </ThemeProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              {children}
+              <Toaster richColors position="top-right" />
+            </ThemeProvider>
+          </AuthProvider>
         </ReactQueryProvider>
       </body>
     </html>

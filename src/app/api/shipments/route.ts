@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { POStatus } from '@prisma/client'
 
 export async function POST(request: Request) {
   try {
@@ -42,7 +43,7 @@ async function updatePOOverallStatus(poId: string) {
   const anyRejected = shipments.some(s => s.status === 'REJECTED')
   const someAccepted = shipments.some(s => s.status === 'ACCEPTED')
   
-  let newStatus = 'NEW'
+  let newStatus: POStatus = 'NEW'
   if (anyRejected) {
     newStatus = 'ACTION_REQUIRED'
   } else if (allAccepted) {

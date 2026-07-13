@@ -4,42 +4,97 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Settings, User, Bell, Building, Save, CheckCircle } from 'lucide-react'
 import { DdaplLayout } from '@/components/DdaplLayout'
+import { useSession } from 'next-auth/react'
 
 export default function SettingsDashboard() {
   const router = useRouter()
+  const { data: session, status } = useSession()
   const [loading, setLoading] = useState(false)
+  const [fetching, setFetching] = useState(true)
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState('')
 
-  // Mock settings state
   const [settings, setSettings] = useState({
-    name: 'DDAPL User',
-    email: 'ddapl@example.com',
-    companyName: 'Acme Corp Logistics',
+    name: '',
+    email: '',
+    companyName: '',
     emailNotifications: true
   })
 
   useEffect(() => {
-    const role = localStorage.getItem('userRole')
-    if (role !== 'DDAPL' && role !== 'ADMIN') {
+    if (status === 'unauthenticated') {
       router.push('/')
       return
     }
-  }, [router])
+    
+    if (status === 'authenticated') {
+      fetchSettings()
+    }
+  }, [status, router])
 
-  const handleSave = (e: React.FormEvent) => {
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/users/me')
+      if (res.ok) {
+        const data = await res.json()
+        setSettings({
+          name: data.name || '',
+          email: data.email || '',
+          companyName: data.companyName || '',
+          emailNotifications: data.emailNotifications ?? true
+        })
+      }
+    } catch (err) {
+      console.error('Failed to fetch settings:', err)
+    } finally {
+      setFetching(false)
+    }
+  }
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError('')
+    setSaved(false)
     
-    // Simulate API save
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/users/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: settings.name,
+          companyName: settings.companyName,
+          emailNotifications: settings.emailNotifications
+        })
+      })
+
+      if (res.ok) {
+        setSaved(true)
+        setTimeout(() => setSaved(false), 3000)
+      } else {
+        const errData = await res.json()
+        setError(errData.error || 'Failed to save settings')
+      }
+    } catch (err) {
+      console.error('Error saving settings:', err)
+      setError('An unexpected error occurred')
+    } finally {
       setLoading(false)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
-    }, 800)
+    }
+  }
+
+  if (fetching) {
+    return (
+      <DdaplLayout fullWidth={true}>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-slate-500">Loading settings...</div>
+        </div>
+      </DdaplLayout>
+    )
   }
 
   return (
-    <DdaplLayout>
+    <DdaplLayout fullWidth={true}>
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center">
@@ -50,6 +105,12 @@ export default function SettingsDashboard() {
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
           <form onSubmit={handleSave} className="p-6 space-y-5">
             
+            {error && (
+              <div className="p-3 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
             {/* Profile Section */}
             <section>
               <h3 className="text-base font-medium text-slate-800 dark:text-white mb-3 border-b border-slate-100 dark:border-slate-700 pb-1.5 flex items-center">
@@ -70,9 +131,10 @@ export default function SettingsDashboard() {
                   <input 
                     type="email" 
                     value={settings.email}
-                    onChange={(e) => setSettings({...settings, email: e.target.value})}
-                    className="w-full px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    disabled
+                    className="w-full px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 cursor-not-allowed"
                   />
+                  <p className="text-xs text-slate-500 mt-1">Email cannot be changed.</p>
                 </div>
               </div>
             </section>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import { signOut, useSession } from 'next-auth/react'
 import { LogOut, LayoutDashboard, Users, Database, Sun, Moon, ShieldAlert } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
@@ -21,9 +22,14 @@ export function AdminLayout({ children, fullWidth = false }: AdminLayoutProps) {
     setMounted(true)
   }, [])
 
-  const handleLogout = () => {
-    localStorage.clear()
-    router.push('/')
+  const { data: session, status } = useSession()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/' })
   }
 
   const navItems = [

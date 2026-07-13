@@ -29,10 +29,12 @@ enum ShipmentStatus {
   REJECTED
 }
 
+
 model User {
   id                 String          @id @default(uuid())
   name               String
   email              String          @unique
+  password           String?         // Hashed password for NextAuth
   role               Role            @default(CUSTOMER)
   purchaseOrders     PurchaseOrder[] // For customers
   emailNotifications Boolean         @default(true)
@@ -45,7 +47,7 @@ model PurchaseOrder {
   id            String     @id @default(uuid())
   poNumber      String     @unique
   customerId    String
-  customer      User       @relation(fields: [customerId], references: [id])
+  customer      User       @relation(fields: [customerId], references: [id], onDelete: Cascade)
   poFile        String     // File path or URL
   overallStatus POStatus   @default(NEW)
   shipments     Shipment[]
@@ -59,7 +61,7 @@ model PurchaseOrder {
 model Shipment {
   id                String        @id @default(uuid())
   poId              String
-  purchaseOrder     PurchaseOrder @relation(fields: [poId], references: [id])
+  purchaseOrder     PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
   shipmentNo        Int
   invoiceNo         String?
   invoicePdf        String?       // File path or URL
@@ -78,28 +80,18 @@ model TrashItem {
   id          String   @id @default(uuid())
   entityType  String   // 'PO', 'SHIPMENT', 'DOCUMENT'
   entityName  String   
-  filePaths   String   // JSON stringified array of file paths
+  filePaths   Json     // JSON array of file paths
   deletedAt   DateTime @default(now())
 }
 
-model DemoDevice {
-  id            String   @id @default(uuid())
-  ddaplId       String
-  customerEmail String
-  dcPdf         String   // Delivery Challan file path
-  podPdf        String   // Proof of Delivery file path
-  status        String   @default("SENT") // "SENT", "VIEWED"
-  linkToken     String   @unique @default(uuid()) // Secure unique URL token
-  createdAt     DateTime @default(now())
-}
 
 model AuditLog {
   id          String   @id @default(uuid())
   entityType  String   // "PurchaseOrder", "Shipment", etc.
   entityId    String
   action      String   // "CREATED", "UPDATED", "DELETED"
-  oldValue    String?
-  newValue    String?
+  oldValue    Json?
+  newValue    Json?
   userId      String?  // ID of the user performing the action
   createdAt   DateTime @default(now())
 

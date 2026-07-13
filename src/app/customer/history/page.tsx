@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { FileText, RefreshCw, Archive, Filter, ChevronDown, ChevronUp, CheckCircle, ExternalLink } from 'lucide-react'
 import { CustomerLayout } from '@/components/CustomerLayout'
 
@@ -25,22 +26,20 @@ type PO = {
 
 export default function CustomerHistory() {
   const router = useRouter()
+  const { data: session } = useSession()
   const [historyPOs, setHistoryPOs] = useState<PO[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'COMPLETED' | 'REJECTED'>('ALL')
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'COMPLETED' | 'ACTION_REQUIRED'>('ALL')
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
   const [expandedPO, setExpandedPO] = useState<string | null>(null)
   
   const filterRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const role = localStorage.getItem('userRole')
-    if (role !== 'CUSTOMER' && role !== 'ADMIN') {
-      router.push('/')
-      return
+    if (session?.user) {
+      fetchHistory()
     }
-    fetchHistory()
     
     const handleClickOutside = (event: MouseEvent) => {
       if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
@@ -52,12 +51,12 @@ export default function CustomerHistory() {
   }, [router])
 
   const fetchHistory = async () => {
-    const customerId = localStorage.getItem('customerId') || 'mock-customer-id-1'
+    const customerId = (session?.user as any)?.id || 'mock-customer-id-1'
     try {
-      const res = await fetch(`/api/pos?role=CUSTOMER&customerId=${customerId}`)
+      const res = await fetch(`/api/pos?role=CUSTOMER&customerId=${customerId}&limit=1000`)
       if (res.ok) {
         const data = await res.json()
-        const archived = data.filter((po: PO) => po.overallStatus === 'COMPLETED' || po.overallStatus === 'REJECTED')
+        const archived = data.pos.filter((po: PO) => po.overallStatus === 'COMPLETED' || po.overallStatus === 'ACTION_REQUIRED')
         setHistoryPOs(archived)
       }
     } catch (error) {
@@ -88,14 +87,14 @@ export default function CustomerHistory() {
         <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 z-10 py-1">
           <button onClick={() => { setStatusFilter('ALL'); setShowFilterDropdown(false); }} className={`block w-full text-left px-4 py-2 text-sm ${statusFilter === 'ALL' ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 font-medium' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>All Statuses</button>
           <button onClick={() => { setStatusFilter('COMPLETED'); setShowFilterDropdown(false); }} className={`block w-full text-left px-4 py-2 text-sm ${statusFilter === 'COMPLETED' ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 font-medium' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Completed</button>
-          <button onClick={() => { setStatusFilter('REJECTED'); setShowFilterDropdown(false); }} className={`block w-full text-left px-4 py-2 text-sm ${statusFilter === 'REJECTED' ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 font-medium' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Rejected</button>
+          <button onClick={() => { setStatusFilter('ACTION_REQUIRED'); setShowFilterDropdown(false); }} className={`block w-full text-left px-4 py-2 text-sm ${statusFilter === 'ACTION_REQUIRED' ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 font-medium' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Rejected</button>
         </div>
       )}
     </div>
   )
 
   return (
-    <CustomerLayout onSearch={setSearchQuery} actionToolbar={actionToolbar}>
+    <CustomerLayout onSearch={setSearchQuery} actionToolbar={actionToolbar} fullWidth={true}>
       {loading ? (
         <div className="flex-1 flex items-center justify-center min-h-[60vh]">
           <RefreshCw className="animate-spin text-teal-500 w-8 h-8" />

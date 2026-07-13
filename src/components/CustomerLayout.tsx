@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { LogOut, Home, History, Settings, Search, Moon, Sun, ShoppingBag, User } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
+import { signOut, useSession } from 'next-auth/react'
 
 export function CustomerLayout({ children, onSearch, fullWidth = false, actionToolbar }: { children: React.ReactNode, onSearch?: (query: string) => void, fullWidth?: boolean, actionToolbar?: React.ReactNode }) {
   const router = useRouter()
@@ -12,16 +13,14 @@ export function CustomerLayout({ children, onSearch, fullWidth = false, actionTo
   const { theme, setTheme, resolvedTheme } = useTheme()
   const currentTheme = theme === 'system' ? resolvedTheme : theme
   const [mounted, setMounted] = useState(false)
-  const [customerId, setCustomerId] = useState<string | null>(null)
+  const { data: session, status } = useSession()
 
   useEffect(() => {
     setMounted(true)
-    setCustomerId(localStorage.getItem('customerId'))
   }, [])
 
-  const handleLogout = () => {
-    localStorage.clear()
-    router.push('/')
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/' })
   }
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,8 +37,8 @@ export function CustomerLayout({ children, onSearch, fullWidth = false, actionTo
   ]
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans flex flex-col">
-      <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
+    <div className="h-screen overflow-hidden bg-slate-50 dark:bg-slate-900 font-sans flex flex-col">
+      <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10 flex-shrink-0">
         <div className={`${fullWidth ? 'w-full' : 'max-w-7xl mx-auto'} px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 transition-all duration-300`}>
           <div className="flex items-center space-x-3 w-full sm:w-auto">
             <div className="w-10 h-10 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center font-bold text-xl">C</div>
@@ -74,7 +73,7 @@ export function CustomerLayout({ children, onSearch, fullWidth = false, actionTo
 
             <div className="flex items-center text-sm font-medium text-slate-600 dark:text-slate-300 mr-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">
               <User className="w-4 h-4 mr-2 text-teal-500" />
-              <span className="hidden sm:inline">Logged in as:</span>&nbsp;<span className="font-bold">{customerId || 'Customer'}</span>
+              <span className="hidden sm:inline">Logged in as:</span>&nbsp;<span className="font-bold">{(session?.user as any)?.name || 'Customer'}</span>
             </div>
 
             <button onClick={handleLogout} className="flex items-center text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors border-l border-slate-200 dark:border-slate-700 pl-4">
@@ -117,7 +116,7 @@ export function CustomerLayout({ children, onSearch, fullWidth = false, actionTo
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 transition-all duration-300">
+      <main className={`flex-1 overflow-y-auto w-full ${fullWidth ? '' : 'max-w-7xl mx-auto'} px-4 sm:px-6 lg:px-8 py-8 transition-all duration-300`}>
         {children}
       </main>
     </div>

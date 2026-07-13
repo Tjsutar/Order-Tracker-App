@@ -27,18 +27,13 @@ export default function HistoryDashboard() {
   const [historyPOs, setHistoryPOs] = useState<PO[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'COMPLETED' | 'REJECTED'>('ALL')
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'COMPLETED' | 'ACTION_REQUIRED'>('ALL')
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
   const [expandedPO, setExpandedPO] = useState<string | null>(null)
   
   const filterRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const role = localStorage.getItem('userRole')
-    if (role !== 'DDAPL' && role !== 'ADMIN') {
-      router.push('/')
-      return
-    }
     fetchHistory()
     
     const handleClickOutside = (event: MouseEvent) => {
@@ -52,10 +47,10 @@ export default function HistoryDashboard() {
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch('/api/pos')
+      const res = await fetch('/api/pos?limit=1000')
       if (res.ok) {
         const data = await res.json()
-        const archived = data.filter((po: PO) => po.overallStatus === 'COMPLETED' || po.overallStatus === 'REJECTED')
+        const archived = data.pos.filter((po: PO) => po.overallStatus === 'COMPLETED' || po.overallStatus === 'ACTION_REQUIRED')
         setHistoryPOs(archived)
       }
     } catch (error) {
@@ -86,14 +81,14 @@ export default function HistoryDashboard() {
         <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 z-10 py-1">
           <button onClick={() => { setStatusFilter('ALL'); setShowFilterDropdown(false); }} className={`block w-full text-left px-4 py-2 text-sm ${statusFilter === 'ALL' ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>All Statuses</button>
           <button onClick={() => { setStatusFilter('COMPLETED'); setShowFilterDropdown(false); }} className={`block w-full text-left px-4 py-2 text-sm ${statusFilter === 'COMPLETED' ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Completed</button>
-          <button onClick={() => { setStatusFilter('REJECTED'); setShowFilterDropdown(false); }} className={`block w-full text-left px-4 py-2 text-sm ${statusFilter === 'REJECTED' ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Rejected</button>
+          <button onClick={() => { setStatusFilter('ACTION_REQUIRED'); setShowFilterDropdown(false); }} className={`block w-full text-left px-4 py-2 text-sm ${statusFilter === 'ACTION_REQUIRED' ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Rejected</button>
         </div>
       )}
     </div>
   )
 
   return (
-    <DdaplLayout onSearch={setSearchQuery} actionToolbar={actionToolbar}>
+    <DdaplLayout onSearch={setSearchQuery} actionToolbar={actionToolbar} fullWidth={true}>
       {loading ? (
         <div className="flex-1 flex items-center justify-center min-h-[60vh]">
           <RefreshCw className="animate-spin text-indigo-500 w-8 h-8" />
