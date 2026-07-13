@@ -1,0 +1,23 @@
+name: Deploy to Windows Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, windows]
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Or your specific Node version
+
+      - name: Run Deployment Script
+        run: .\deploy.ps1
+        shell: powershell
