@@ -83,8 +83,7 @@ export async function PATCH(
       // Determine final filename based on the FIRST sorted file in sequence
       const firstFile = sortedFiles[0]
       const originalName = firstFile.name
-      const baseName = originalName.replace(/\.[^/.]+$/, "") // strip extension
-      const finalFilename = `${baseName}_${type}.pdf` // e.g. INV-123_invoicePdf.pdf
+      let baseName = originalName.replace(/\.[^/.]+$/, "") // strip extension
 
       const currentShipment = await prisma.shipment.findUnique({ 
         where: { id: params.id },
@@ -95,6 +94,15 @@ export async function PATCH(
         return NextResponse.json({ error: 'Shipment not found' }, { status: 404 })
       }
       
+      // If uploading a POD, include the invoice name in the POD filename for clarity
+      if (type === 'podPdf' && currentShipment.invoicePdf) {
+        const invoiceFilename = path.basename(currentShipment.invoicePdf)
+        const invoiceBase = invoiceFilename.replace(/_invoicePdf\.pdf$/, "")
+        baseName = `${invoiceBase}_POD_for_${baseName}`
+      }
+
+      const finalFilename = `${baseName}_${type}.pdf` // e.g. INV-123_invoicePdf.pdf
+
       const poNumber = currentShipment.purchaseOrder?.poNumber || 'Unknown_PO'
 
       // Prepare private storage path specific to this PO
