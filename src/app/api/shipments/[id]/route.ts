@@ -86,8 +86,19 @@ export async function PATCH(
       const baseName = originalName.replace(/\.[^/.]+$/, "") // strip extension
       const finalFilename = `${baseName}_${type}.pdf` // e.g. INV-123_invoicePdf.pdf
 
-      // Prepare private storage path
-      const storagePath = path.join(process.cwd(), 'storage', 'uploads')
+      const currentShipment = await prisma.shipment.findUnique({ 
+        where: { id: params.id },
+        include: { purchaseOrder: true }
+      })
+      
+      if (!currentShipment) {
+        return NextResponse.json({ error: 'Shipment not found' }, { status: 404 })
+      }
+      
+      const poNumber = currentShipment.purchaseOrder?.poNumber || 'Unknown_PO'
+
+      // Prepare private storage path specific to this PO
+      const storagePath = path.join(process.cwd(), 'storage', 'uploads', poNumber)
 
       try {
         await mkdir(storagePath, { recursive: true })
@@ -141,7 +152,7 @@ export async function PATCH(
       const updateData: any = {}
       updateData[type] = filePath
 
-      const currentShipment = await prisma.shipment.findUnique({ where: { id: params.id } })
+      // currentShipment is already fetched above
       
       const hasInvoice = type === 'invoicePdf' ? true : !!currentShipment?.invoicePdf
       const hasPod = type === 'podPdf' ? true : !!currentShipment?.podPdf

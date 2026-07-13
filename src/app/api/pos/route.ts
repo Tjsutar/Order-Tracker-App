@@ -115,20 +115,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Selected customer does not exist' }, { status: 400 })
     }
 
-    // Prepare private storage path
-    const storagePath = path.join(process.cwd(), 'storage', 'uploads')
+    // Process file
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const filename = file.name
+    const poNumber = filename.replace(/\.[^/.]+$/, "") // strip extension
+
+    // Prepare private storage path specific to this PO
+    const storagePath = path.join(process.cwd(), 'storage', 'uploads', poNumber)
     
     try {
       await mkdir(storagePath, { recursive: true })
     } catch (err) {
       console.error('Could not create directory:', err)
-      // Fallback to project root if OneDrive folder can't be created due to permissions
     }
-
-    // Process file
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const filename = file.name
-    const poNumber = filename.replace(/\.[^/.]+$/, "") // strip extension
 
     // Check if PO already exists
     const existingPo = await prisma.purchaseOrder.findUnique({
