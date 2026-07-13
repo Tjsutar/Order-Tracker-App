@@ -5,6 +5,7 @@ import { LogOut, Home, History, Settings, Search, Moon, Sun, ShoppingBag, User }
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 import { signOut, useSession } from 'next-auth/react'
+import { useDebounce } from '@/hooks/useDebounce'
 
 export function CustomerLayout({ children, onSearch, fullWidth = false, actionToolbar }: { children: React.ReactNode, onSearch?: (query: string) => void, fullWidth?: boolean, actionToolbar?: React.ReactNode }) {
   const router = useRouter()
@@ -14,10 +15,17 @@ export function CustomerLayout({ children, onSearch, fullWidth = false, actionTo
   const currentTheme = theme === 'system' ? resolvedTheme : theme
   const [mounted, setMounted] = useState(false)
   const { data: session, status } = useSession()
+  const debouncedSearch = useDebounce(searchQuery, 400)
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (onSearch) {
+      onSearch(debouncedSearch)
+    }
+  }, [debouncedSearch, onSearch])
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: '/' })
@@ -25,9 +33,6 @@ export function CustomerLayout({ children, onSearch, fullWidth = false, actionTo
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
-    if (onSearch) {
-      onSearch(e.target.value)
-    }
   }
 
   const navItems = [

@@ -6,6 +6,7 @@ import { Search, LogOut, Home, History, Settings, Smartphone, Trash2, Sun, Moon,
 import { useTheme } from 'next-themes'
 import { useEffect, useState as useReactState } from 'react'
 import { signOut, useSession } from 'next-auth/react'
+import { useDebounce } from '@/hooks/useDebounce'
 
 export function DdaplLayout({ children, onSearch, onOpenTrash, fullWidth = false, actionToolbar }: { children: React.ReactNode, onSearch?: (query: string) => void, onOpenTrash?: () => void, fullWidth?: boolean, actionToolbar?: React.ReactNode }) {
   const router = useRouter()
@@ -16,10 +17,17 @@ export function DdaplLayout({ children, onSearch, onOpenTrash, fullWidth = false
   const [mounted, setMounted] = useReactState(false)
 
   const { data: session, status } = useSession()
+  const debouncedSearch = useDebounce(searchQuery, 400)
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (onSearch) {
+      onSearch(debouncedSearch)
+    }
+  }, [debouncedSearch, onSearch])
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: '/' })
@@ -27,9 +35,6 @@ export function DdaplLayout({ children, onSearch, onOpenTrash, fullWidth = false
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
-    if (onSearch) {
-      onSearch(e.target.value)
-    }
   }
 
   const navItems = [

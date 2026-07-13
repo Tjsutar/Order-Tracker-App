@@ -8,7 +8,10 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { CustomerLayout } from '@/components/CustomerLayout'
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
-type Shipment = {
+import { CustomerAnalyticsSidebar } from './CustomerAnalyticsSidebar'
+import { CustomerPOCard } from './CustomerPOCard'
+
+export type Shipment = {
   id: string
   poId: string
   shipmentNo: number
@@ -19,7 +22,7 @@ type Shipment = {
   visibleToCustomer: boolean
 }
 
-type PO = {
+export type PO = {
   id: string
   poNumber: string
   poFile: string
@@ -145,167 +148,21 @@ export function CustomerDashboardClient({ initialData, customerId }: { initialDa
       <div className="flex flex-col lg:flex-row gap-6 w-full">
         {/* Left Side Pane: Analytics */}
         {analytics && (
-          <div className="w-full lg:w-48 flex-shrink-0">
-            <div className="sticky top-6">
-              <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 px-1">Overview</h2>
-              <div className="flex flex-col gap-3">
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3.5 flex items-center transition-all hover:shadow-md">
-                  <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 flex items-center justify-center mr-3 flex-shrink-0">
-                    <Activity className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-none mb-0.5">{analytics.activePOs}</h3>
-                    <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-tight">Active POs</p>
-                  </div>
-                </div>
-                
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3.5 flex items-center transition-all hover:shadow-md">
-                  <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center mr-3 flex-shrink-0">
-                    <AlertTriangle className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-none mb-0.5">{analytics.actionRequiredPOs}</h3>
-                    <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-tight">Action Required</p>
-                  </div>
-                </div>
-                
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3.5 flex items-center transition-all hover:shadow-md">
-                  <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center mr-3 flex-shrink-0">
-                    <TrendingUp className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-none mb-0.5">{analytics.rejectionRate}%</h3>
-                    <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-tight">Rejection Rate</p>
-                  </div>
-                </div>
-                
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3.5 flex items-center transition-all hover:shadow-md">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mr-3 flex-shrink-0">
-                    <Clock className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-none mb-0.5">{analytics.avgCompletionDays} <span className="text-[10px] font-medium text-slate-500">days</span></h3>
-                    <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-tight">Avg Completion</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <CustomerAnalyticsSidebar analytics={analytics} />
         )}
 
         <div className="flex-1 min-w-0">
           <div className="space-y-4">
-        {displayPOs.map(po => {
-            const visibleShipments = po.shipments.filter(s => s.visibleToCustomer)
-            
-            return (
-              <div key={po.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-800 dark:text-white">{po.poNumber}</h3>
-                    <p className="text-sm text-slate-500 mt-1">Status: <span className="font-semibold text-teal-600 dark:text-teal-400">{po.overallStatus.replace(/_/g, ' ')}</span></p>
-                  </div>
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <a 
-                      href={`/api/files?path=${encodeURIComponent(po.poFile)}&view=true`}
-                      target="_blank"
-                      className="text-sm font-medium text-teal-600 hover:text-teal-900 dark:text-teal-400 dark:hover:text-white bg-teal-50 dark:bg-teal-900/30 border border-teal-100 dark:border-teal-800 px-4 py-2 rounded-lg transition-colors flex items-center shadow-sm"
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" /> View PO
-                    </a>
-                    <a 
-                      href={`/api/pos/${po.id}/download`}
-                      download
-                      className="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-4 py-2 rounded-lg transition-colors flex items-center shadow-sm"
-                    >
-                      <Download className="w-4 h-4 mr-2" /> Download Entire PO
-                    </a>
-                    <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
-                    <button onClick={() => togglePO(po.id)} className="text-slate-400 hover:text-teal-600 hover:bg-slate-100 dark:hover:bg-slate-700 p-1.5 rounded-full transition-colors flex items-center">
-                      {expandedPOs[po.id] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-                
-                {expandedPOs[po.id] && (
-                <div className="p-6">
-                  {visibleShipments.length === 0 ? (
-                    <p className="text-slate-400 text-sm italic py-4">No shipments visible for this PO yet.</p>
-                  ) : (
-                    <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                      <table className="w-full text-left text-sm whitespace-nowrap">
-                        <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-700">
-                          <tr>
-                            <th className="px-6 py-3">Shipment No.</th>
-                            <th className="px-6 py-3">Status</th>
-                            <th className="px-6 py-3">Documents</th>
-                            <th className="px-6 py-3 text-right">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 bg-white dark:bg-slate-800">
-                          {visibleShipments.map(shipment => (
-                            <tr key={shipment.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
-                              <td className="px-6 py-3 font-bold text-slate-800 dark:text-white">
-                                Shipment {shipment.shipmentNo}
-                              </td>
-                              <td className="px-6 py-3">
-                                <StatusBadge status={shipment.status} />
-                                {shipment.status === 'REJECTED' && shipment.customerRemarks && (
-                                  <p className="mt-2 text-xs text-red-600 font-medium truncate max-w-[200px]" title={shipment.customerRemarks}>Reason: {shipment.customerRemarks}</p>
-                                )}
-                              </td>
-                              <td className="px-6 py-3">
-                                <div className="flex flex-col gap-2">
-                                  {shipment.invoicePdf && (
-                                    <a href={`/api/files?path=${encodeURIComponent(shipment.invoicePdf)}&view=true`} target="_blank" className="inline-flex w-fit items-center px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 border border-indigo-100 dark:border-indigo-800/60 rounded-md text-sm text-indigo-700 dark:text-indigo-300 font-medium transition-colors shadow-sm">
-                                      <File className="w-4 h-4 mr-1.5" /> Invoice <ExternalLink className="w-3 h-3 ml-1.5 opacity-70" />
-                                    </a>
-                                  )}
-                                  {shipment.podPdf && (
-                                    <a href={`/api/files?path=${encodeURIComponent(shipment.podPdf)}&view=true`} target="_blank" className="inline-flex w-fit items-center px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 border border-indigo-100 dark:border-indigo-800/60 rounded-md text-sm text-indigo-700 dark:text-indigo-300 font-medium transition-colors shadow-sm">
-                                      <File className="w-4 h-4 mr-1.5" /> POD <ExternalLink className="w-3 h-3 ml-1.5 opacity-70" />
-                                    </a>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-6 py-3 text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                  {shipment.status === 'WAITING_APPROVAL' && (
-                                    <>
-                                      <button 
-                                        onClick={() => handleAction(shipment.id, 'ACCEPTED')}
-                                        className="flex items-center bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md font-medium shadow-sm transition-colors text-xs"
-                                      >
-                                        <CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Accept
-                                      </button>
-                                      <button 
-                                        onClick={() => setRejectModalState({ isOpen: true, shipmentId: shipment.id, reason: '' })}
-                                        className="flex items-center bg-white dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 px-3 py-1.5 rounded-md font-medium transition-colors text-xs"
-                                      >
-                                        <XCircle className="w-3.5 h-3.5 mr-1.5" /> Reject
-                                      </button>
-                                    </>
-                                  )}
-                                  <a 
-                                    href={`/api/shipments/${shipment.id}/download`}
-                                    download
-                                    className="flex items-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-md font-medium transition-colors text-xs"
-                                  >
-                                    <Download className="w-3.5 h-3.5 mr-1.5" /> Download
-                                  </a>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-                )}
-              </div>
-            )
-          })}
+        {displayPOs.map(po => (
+            <CustomerPOCard
+              key={po.id}
+              po={po}
+              isExpanded={!!expandedPOs[po.id]}
+              onToggle={() => togglePO(po.id)}
+              onAction={handleAction}
+              onReject={(shipmentId) => setRejectModalState({ isOpen: true, shipmentId, reason: '' })}
+            />
+          ))}
           {displayPOs.length === 0 && (
             <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 border-dashed">
               <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
