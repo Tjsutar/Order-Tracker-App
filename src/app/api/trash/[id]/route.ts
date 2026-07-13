@@ -17,7 +17,7 @@ export async function DELETE(
     }
 
     // Parse file paths and physically delete them
-    const filePaths = JSON.parse(trashItem.filePaths) as string[]
+    const filePaths = (typeof trashItem.filePaths === 'string' ? JSON.parse(trashItem.filePaths) : trashItem.filePaths) as string[]
     for (const filePath of filePaths) {
       try {
         await unlink(filePath)
