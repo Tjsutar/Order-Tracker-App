@@ -68,7 +68,7 @@ $iisFeature = Get-WindowsFeature -Name Web-Server -ErrorAction SilentlyContinue
 if ($iisFeature -and $iisFeature.Installed) {
     Write-Host "  [OK] IIS is installed." -ForegroundColor Green
     
-    $arrFeature = Get-WebConfiguration -pspath 'MACHINE/WEBROOT/APPHOST' -filter "system.webServer/proxy" -ErrorAction SilentlyContinue
+    [void](Get-WebConfiguration -pspath 'MACHINE/WEBROOT/APPHOST' -filter "system.webServer/proxy" -ErrorAction SilentlyContinue)
     if ($?) {
         Write-Host "  [OK] Application Request Routing (ARR) / URL Rewrite module seems active." -ForegroundColor Green
     } else {
@@ -82,7 +82,7 @@ Write-Host ""
 # 6. Checking Open Ports (Listening Status)
 Write-Host "[6/7] Checking Listening Ports..." -ForegroundColor Yellow
 
-function Check-Port {
+function Test-Port {
     param($port, $serviceName)
     $connection = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
     if ($connection) {
@@ -92,14 +92,14 @@ function Check-Port {
     }
 }
 
-Check-Port 80 "HTTP (IIS/Nginx)"
-Check-Port 443 "HTTPS (IIS/Nginx)"
-Check-Port 3000 "Node.js/PM2 Default"
+Test-Port 80 "HTTP (IIS/Nginx)"
+Test-Port 443 "HTTPS (IIS/Nginx)"
+Test-Port 3000 "Node.js/PM2 Default"
 Write-Host ""
 
 # 7. Firewall Rules (Windows Firewall)
 Write-Host "[7/7] Checking Windows Firewall Rules..." -ForegroundColor Yellow
-function Check-FirewallRule {
+function Test-FirewallRule {
     param($port)
     $rule = Get-NetFirewallRule | Where-Object { $_.Enabled -eq "True" -and $_.Direction -eq "Inbound" } | Get-NetFirewallPortFilter | Where-Object { $_.LocalPort -eq $port }
     if ($rule) {
@@ -109,8 +109,8 @@ function Check-FirewallRule {
     }
 }
 
-Check-FirewallRule 80
-Check-FirewallRule 443
+Test-FirewallRule 80
+Test-FirewallRule 443
 Write-Host ""
 
 Write-Host "==========================================================" -ForegroundColor Cyan
