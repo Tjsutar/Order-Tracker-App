@@ -37,7 +37,7 @@ export async function GET() {
     
     let avgCompletionDays = 0
     if (completedPOs.length > 0) {
-      const totalDays = completedPOs.reduce((acc, po) => {
+      const totalDays = completedPOs.reduce((acc: number, po) => {
         const diffTime = Math.abs(po.updatedAt.getTime() - po.uploadDate.getTime())
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
         return acc + diffDays
