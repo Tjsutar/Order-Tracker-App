@@ -70,9 +70,7 @@ export default function Home() {
         
         <div className="p-8 space-y-6">
           <form onSubmit={handleLogin} className="space-y-4">
-            <div className="text-xs text-slate-500 break-words">
-              Session Debug: {JSON.stringify(session)}
-            </div>
+
             
             <div>
               <Label className="mb-1.5 block">Email</Label>
