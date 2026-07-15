@@ -75,8 +75,8 @@ export function CustomerPOCard({
                           <p className="mt-2 text-xs text-red-600 font-medium truncate max-w-[200px]" title={shipment.customerRemarks}>Reason: {shipment.customerRemarks}</p>
                         )}
                       </td>
-                      <td className="px-6 py-3">
-                        <div className="flex flex-row flex-wrap gap-2">
+                      <td className="px-6 py-3 min-w-[240px]">
+                        <div className="flex items-center gap-2">
                           {shipment.invoicePdf && (
                             <a href={`/api/files?path=${encodeURIComponent(shipment.invoicePdf)}&view=true`} target="_blank" className="inline-flex items-center px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 border border-indigo-100 dark:border-indigo-800/60 rounded-md text-sm text-indigo-700 dark:text-indigo-300 font-medium transition-all shadow-sm w-[105px] justify-center">
                               <File className="w-4 h-4 mr-1.5" /> Invoice
