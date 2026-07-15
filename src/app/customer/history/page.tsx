@@ -179,16 +179,16 @@ export default function CustomerHistory() {
                                           {shipment.status.replace(/_/g, ' ').toLowerCase()}
                                         </span>
                                       </td>
-                                      <td className="px-4 py-3">
-                                        <div className="flex flex-col gap-2">
+                                      <td className="px-4 py-3 min-w-[240px]">
+                                        <div className="flex items-center gap-2">
                                           {shipment.invoicePdf && (
-                                            <a href={`/api/files?path=${encodeURIComponent(shipment.invoicePdf)}&view=true`} target="_blank" className="inline-flex w-fit items-center px-3 py-1.5 bg-teal-50 hover:bg-teal-100 dark:bg-teal-900/30 dark:hover:bg-teal-900/50 border border-teal-100 dark:border-teal-800/60 rounded-md text-xs text-teal-700 dark:text-teal-300 font-medium transition-colors shadow-sm">
-                                              <FileText className="w-3.5 h-3.5 mr-1.5" /> Invoice <ExternalLink className="w-3 h-3 ml-1.5 opacity-70" />
+                                            <a href={`/api/files?path=${encodeURIComponent(shipment.invoicePdf)}&view=true`} target="_blank" className="inline-flex items-center px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 border border-indigo-100 dark:border-indigo-800/60 rounded-md text-sm text-indigo-700 dark:text-indigo-300 font-medium transition-all shadow-sm w-[105px] justify-center">
+                                              <FileText className="w-4 h-4 mr-1.5" /> Invoice
                                             </a>
                                           )}
                                           {shipment.podPdf && (
-                                            <a href={`/api/files?path=${encodeURIComponent(shipment.podPdf)}&view=true`} target="_blank" className="inline-flex w-fit items-center px-3 py-1.5 bg-teal-50 hover:bg-teal-100 dark:bg-teal-900/30 dark:hover:bg-teal-900/50 border border-teal-100 dark:border-teal-800/60 rounded-md text-xs text-teal-700 dark:text-teal-300 font-medium transition-colors shadow-sm">
-                                              <FileText className="w-3.5 h-3.5 mr-1.5" /> POD <ExternalLink className="w-3 h-3 ml-1.5 opacity-70" />
+                                            <a href={`/api/files?path=${encodeURIComponent(shipment.podPdf)}&view=true`} target="_blank" className="inline-flex items-center px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 border border-indigo-100 dark:border-indigo-800/60 rounded-md text-sm text-indigo-700 dark:text-indigo-300 font-medium transition-all shadow-sm w-[105px] justify-center">
+                                              <FileText className="w-4 h-4 mr-1.5" /> POD
                                             </a>
                                           )}
                                         </div>
