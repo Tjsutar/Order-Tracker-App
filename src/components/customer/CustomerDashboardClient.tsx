@@ -74,6 +74,7 @@ export function CustomerDashboardClient({ initialData, customerId }: { initialDa
       pageParams: [null],
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: 30000, // Refetch every 30 seconds to auto-update new shipments
   })
 
   const displayPOs: PO[] = data?.pages.flatMap(page => page.pos) || (deferredSearch || activeTab !== 'ACTIVE' ? [] : initialData.pos)
@@ -89,6 +90,7 @@ export function CustomerDashboardClient({ initialData, customerId }: { initialDa
       return res.json()
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: 30000, // Refetch every 30 seconds to auto-update analytics
   })
 
   const handleAction = async (shipmentId: string, action: 'ACCEPTED') => {

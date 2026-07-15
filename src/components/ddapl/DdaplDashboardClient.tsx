@@ -100,6 +100,7 @@ export function DdaplDashboardClient({ initialData }: { initialData: { pos: PO[]
       pageParams: [null],
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: 30000, // Refetch every 30 seconds to auto-update
   })
 
   const displayPOs: PO[] = data?.pages.flatMap(page => page.pos) || (deferredSearch || activeTab !== 'ACTIVE' ? [] : initialData.pos)
@@ -115,6 +116,7 @@ export function DdaplDashboardClient({ initialData }: { initialData: { pos: PO[]
       return res.json()
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: 30000, // Refetch every 30 seconds to auto-update
   })
 
   const addShipmentMutation = useMutation({
