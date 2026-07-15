@@ -78,13 +78,13 @@ export function CustomerPOCard({
                       <td className="px-6 py-3">
                         <div className="flex flex-row flex-wrap gap-2">
                           {shipment.invoicePdf && (
-                            <a href={`/api/files?path=${encodeURIComponent(shipment.invoicePdf)}&view=true`} target="_blank" className="inline-flex w-fit items-center px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 border border-indigo-100 dark:border-indigo-800/60 rounded-md text-sm text-indigo-700 dark:text-indigo-300 font-medium transition-colors shadow-sm">
-                              <File className="w-4 h-4 mr-1.5" /> Invoice <ExternalLink className="w-3 h-3 ml-1.5 opacity-70" />
+                            <a href={`/api/files?path=${encodeURIComponent(shipment.invoicePdf)}&view=true`} target="_blank" className="inline-flex items-center px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 border border-indigo-100 dark:border-indigo-800/60 rounded-md text-sm text-indigo-700 dark:text-indigo-300 font-medium transition-all shadow-sm w-[105px] justify-center">
+                              <File className="w-4 h-4 mr-1.5" /> Invoice
                             </a>
                           )}
                           {shipment.podPdf && (
-                            <a href={`/api/files?path=${encodeURIComponent(shipment.podPdf)}&view=true`} target="_blank" className="inline-flex w-fit items-center px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 border border-indigo-100 dark:border-indigo-800/60 rounded-md text-sm text-indigo-700 dark:text-indigo-300 font-medium transition-colors shadow-sm">
-                              <File className="w-4 h-4 mr-1.5" /> POD <ExternalLink className="w-3 h-3 ml-1.5 opacity-70" />
+                            <a href={`/api/files?path=${encodeURIComponent(shipment.podPdf)}&view=true`} target="_blank" className="inline-flex items-center px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 border border-indigo-100 dark:border-indigo-800/60 rounded-md text-sm text-indigo-700 dark:text-indigo-300 font-medium transition-all shadow-sm w-[105px] justify-center">
+                              <File className="w-4 h-4 mr-1.5" /> POD
                             </a>
                           )}
                         </div>
@@ -95,24 +95,24 @@ export function CustomerPOCard({
                             <>
                               <button
                                 onClick={() => onAction(shipment.id, 'ACCEPTED')}
-                                className="flex items-center bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md font-medium shadow-sm transition-colors text-xs"
+                                className="inline-flex items-center px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-all shadow-sm w-[105px] justify-center cursor-pointer"
                               >
-                                <CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Accept
+                                <CheckCircle className="w-4 h-4 mr-1.5" /> Accept
                               </button>
                               <button
                                 onClick={() => onReject(shipment.id)}
-                                className="flex items-center bg-white dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 px-3 py-1.5 rounded-md font-medium transition-colors text-xs"
+                                className="inline-flex items-center px-3 py-1.5 bg-white dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 rounded-md text-sm font-medium transition-all shadow-sm w-[105px] justify-center cursor-pointer"
                               >
-                                <XCircle className="w-3.5 h-3.5 mr-1.5" /> Reject
+                                <XCircle className="w-4 h-4 mr-1.5" /> Reject
                               </button>
                             </>
                           )}
                           <a
                             href={`/api/shipments/${shipment.id}/download`}
                             download
-                            className="flex items-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-md font-medium transition-colors text-xs"
+                            className="inline-flex items-center px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-md text-sm font-medium transition-all shadow-sm w-[115px] justify-center"
                           >
-                            <Download className="w-3.5 h-3.5 mr-1.5" /> Download
+                            <Download className="w-4 h-4 mr-1.5" /> Download
                           </a>
                         </div>
                       </td>
