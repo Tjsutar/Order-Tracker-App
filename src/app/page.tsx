@@ -75,7 +75,7 @@ export default function Home() {
             <div>
               <Label className="mb-1.5 block">Email</Label>
               <Input 
-                type="email" 
+                type="text"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

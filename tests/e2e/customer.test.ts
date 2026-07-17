@@ -1,8 +1,8 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
 
 const BASE_URL = 'http://localhost:3000';
-const CUSTOMER_EMAIL = 'customer@example.com';
-const CUSTOMER_PASSWORD = 'password123';
+const CUSTOMER_EMAIL = 'zepto@zeptonow.com';
+const CUSTOMER_PASSWORD = 'zepto@2026';
 
 describe('E2E: Customer User Role', () => {
   let browser: Browser;
@@ -24,19 +24,25 @@ describe('E2E: Customer User Role', () => {
   afterEach(async () => {
     const [logoutButton] = await page.$$('::-p-xpath(//button[contains(., "Logout")])');
     if (logoutButton) {
-      await (logoutButton as any).click();
-      await page.waitForNavigation({ waitUntil: 'networkidle0' }).catch(() => {});
+      await page.evaluate((b) => (b as HTMLElement).click(), logoutButton);
+      await page.waitForFunction(() => window.location.pathname === '/', { timeout: 5000 }).catch(() => {});
+      await new Promise(r => setTimeout(r, 1000));
     }
   });
 
   test('TC_C01 & TC_C02: Authentication & Navigation', async () => {
     // Valid Login (TC_C01)
-    await page.goto(`${BASE_URL}/login`);
+    await page.goto(`${BASE_URL}/`);
+    await new Promise(r => setTimeout(r, 1000));
     await page.waitForSelector('input[type="email"]');
     await page.type('input[type="email"]', CUSTOMER_EMAIL);
     await page.type('input[type="password"]', CUSTOMER_PASSWORD);
-    await page.click('button[type="submit"]');
-    await page.waitForNavigation({ waitUntil: 'networkidle0' });
+    
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => window.location.pathname !== '/', { timeout: 15000 });
+    
+    await new Promise(r => setTimeout(r, 1000));
+    if (page.url().endsWith('/')) throw new Error(`Login failed for ${CUSTOMER_EMAIL}`);
     expect(page.url()).toContain('/customer');
 
     // Unauthorized Access (TC_C02) - Attempt to visit DDAPL
@@ -47,12 +53,17 @@ describe('E2E: Customer User Role', () => {
   });
 
   test('TC_C04: Sidebar Analytics Match', async () => {
-    await page.goto(`${BASE_URL}/login`);
+    await page.goto(`${BASE_URL}/`);
+    await new Promise(r => setTimeout(r, 1000));
     await page.waitForSelector('input[type="email"]');
     await page.type('input[type="email"]', CUSTOMER_EMAIL);
     await page.type('input[type="password"]', CUSTOMER_PASSWORD);
-    await page.click('button[type="submit"]');
-    await page.waitForNavigation({ waitUntil: 'networkidle0' });
+    
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => window.location.pathname !== '/', { timeout: 15000 });
+    
+    await new Promise(r => setTimeout(r, 1000));
+    if (page.url().endsWith('/')) throw new Error(`Login failed for ${CUSTOMER_EMAIL}`);
 
     // Get number in the tab
     const [tabElem] = await page.$$('::-p-xpath(//button[contains(., "Active")])');
