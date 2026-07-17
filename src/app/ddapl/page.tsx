@@ -10,7 +10,7 @@ export default async function DdaplDashboard() {
   const pos = await prisma.purchaseOrder.findMany({
     take: limit,
     where: {
-      overallStatus: { notIn: ['COMPLETED', 'ACTION_REQUIRED'] }
+      overallStatus: { not: 'COMPLETED' }
     },
     include: { 
       shipments: true,
@@ -20,8 +20,8 @@ export default async function DdaplDashboard() {
   })
   
   const [activeCount, actionRequiredCount, completedCount] = await Promise.all([
-    prisma.purchaseOrder.count({ where: { overallStatus: { notIn: ['COMPLETED', 'ACTION_REQUIRED'] } } }),
-    prisma.purchaseOrder.count({ where: { overallStatus: 'ACTION_REQUIRED' } }),
+    Promise.resolve(0),
+    prisma.purchaseOrder.count({ where: { overallStatus: { not: 'COMPLETED' } } }),
     prisma.purchaseOrder.count({ where: { overallStatus: 'COMPLETED' } })
   ])
   

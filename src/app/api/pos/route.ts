@@ -73,11 +73,11 @@ export async function GET(request: Request) {
       }
     } else {
       if (tab === 'ACTION_REQUIRED') {
-        queryOptions.where.overallStatus = 'ACTION_REQUIRED'
+        queryOptions.where.overallStatus = { not: 'COMPLETED' }
       } else if (tab === 'COMPLETED') {
         queryOptions.where.overallStatus = 'COMPLETED'
       } else if (tab === 'ACTIVE') {
-        queryOptions.where.overallStatus = { notIn: ['COMPLETED', 'ACTION_REQUIRED'] }
+        queryOptions.where.id = 'NONE_WILL_MATCH'
       }
     }
 
@@ -99,8 +99,8 @@ export async function GET(request: Request) {
       completedCount = counts[2]
     } else {
       const counts = await Promise.all([
-        prisma.purchaseOrder.count({ where: { ...baseWhere, overallStatus: { notIn: ['COMPLETED', 'ACTION_REQUIRED'] } } }),
-        prisma.purchaseOrder.count({ where: { ...baseWhere, overallStatus: 'ACTION_REQUIRED' } }),
+        Promise.resolve(0),
+        prisma.purchaseOrder.count({ where: { ...baseWhere, overallStatus: { not: 'COMPLETED' } } }),
         prisma.purchaseOrder.count({ where: { ...baseWhere, overallStatus: 'COMPLETED' } })
       ])
       activeCount = counts[0]

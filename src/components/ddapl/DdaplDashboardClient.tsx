@@ -38,7 +38,7 @@ export type PO = {
 export function DdaplDashboardClient({ initialData }: { initialData: { pos: PO[], nextCursor: string | null, counts?: any } }) {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState<'ACTIVE' | 'ACTION_REQUIRED' | 'COMPLETED'>('ACTIVE')
+  const [activeTab, setActiveTab] = useState<'ACTIVE' | 'ACTION_REQUIRED' | 'COMPLETED'>('ACTION_REQUIRED')
 
   // Modal States
   const [isCreatePOModalOpen, setIsCreatePOModalOpen] = useState(false)
@@ -95,7 +95,7 @@ export function DdaplDashboardClient({ initialData }: { initialData: { pos: PO[]
     },
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    initialData: (deferredSearch || activeTab !== 'ACTIVE') ? undefined : {
+    initialData: (deferredSearch || activeTab !== 'ACTION_REQUIRED') ? undefined : {
       pages: [initialData],
       pageParams: [null],
     },
@@ -103,7 +103,7 @@ export function DdaplDashboardClient({ initialData }: { initialData: { pos: PO[]
     refetchInterval: 30000, // Refetch every 30 seconds to auto-update
   })
 
-  const displayPOs: PO[] = data?.pages.flatMap(page => page.pos) || (deferredSearch || activeTab !== 'ACTIVE' ? [] : initialData.pos)
+  const displayPOs: PO[] = data?.pages.flatMap(page => page.pos) || (deferredSearch || activeTab !== 'ACTION_REQUIRED' ? [] : initialData.pos)
   
   // Get counts from the latest page, fallback to 0 if not loaded
   const counts = data?.pages[0]?.counts || initialData.counts || { ACTIVE: 0, ACTION_REQUIRED: 0, COMPLETED: 0 }
@@ -209,9 +209,6 @@ export function DdaplDashboardClient({ initialData }: { initialData: { pos: PO[]
   const actionToolbar = (
     <div className="flex items-center gap-3 h-9">
       <div className="h-full inline-flex p-1 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-        <button onClick={() => setActiveTab('ACTIVE')} className={`h-full flex items-center justify-center px-4 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === 'ACTIVE' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}>
-          Active ({counts.ACTIVE})
-        </button>
         <button onClick={() => setActiveTab('ACTION_REQUIRED')} className={`h-full flex items-center justify-center px-4 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === 'ACTION_REQUIRED' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}>
           Action Required ({counts.ACTION_REQUIRED})
         </button>
@@ -280,10 +277,10 @@ export function DdaplDashboardClient({ initialData }: { initialData: { pos: PO[]
           <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 border-dashed">
             <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-900 dark:text-white">
-              {searchQuery ? `No ${activeTab === 'ACTIVE' ? 'Active' : activeTab === 'ACTION_REQUIRED' ? 'Action Required' : 'Completed'} Purchase Orders match your search` : `No ${activeTab === 'ACTIVE' ? 'Active' : activeTab === 'ACTION_REQUIRED' ? 'Action Required' : 'Completed'} Purchase Orders yet`}
+              {searchQuery ? `No ${activeTab === 'ACTION_REQUIRED' ? 'Action Required' : 'Completed'} Purchase Orders match your search` : `No ${activeTab === 'ACTION_REQUIRED' ? 'Action Required' : 'Completed'} Purchase Orders yet`}
             </h3>
             <p className="text-slate-500 dark:text-slate-400 mt-2">
-              {searchQuery ? 'Try adjusting your search terms.' : activeTab === 'ACTIVE' ? 'Get started by creating a new PO.' : activeTab === 'ACTION_REQUIRED' ? 'POs needing your attention will appear here.' : 'Completed POs will appear here.'}
+              {searchQuery ? 'Try adjusting your search terms.' : activeTab === 'ACTION_REQUIRED' ? 'POs needing your attention will appear here.' : 'Completed POs will appear here.'}
             </p>
           </div>
         )}
