@@ -14,6 +14,7 @@ export async function GET(request: Request) {
   const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 10
   const search = searchParams.get('search')
   const tab = searchParams.get('tab')
+  const status = searchParams.get('status')
 
   try {
     const queryOptions: any = {
@@ -63,7 +64,13 @@ export async function GET(request: Request) {
     // Capture base where clause before applying the tab filter for counting
     const baseWhere = { ...queryOptions.where }
 
-    if (role === 'CUSTOMER') {
+    if (tab === 'HISTORY') {
+      if (status && status !== 'ALL') {
+        queryOptions.where.overallStatus = status
+      } else {
+        queryOptions.where.overallStatus = { in: ['COMPLETED', 'ACTION_REQUIRED'] }
+      }
+    } else if (role === 'CUSTOMER') {
       if (tab === 'ACTION_REQUIRED') {
         queryOptions.where.id = 'NONE_WILL_MATCH'
       } else if (tab === 'COMPLETED') {
