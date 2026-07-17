@@ -21,17 +21,7 @@ export function CustomerAnalyticsSidebar({ analytics }: { analytics: CustomerAna
             </div>
             <div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-none mb-0.5">{analytics.activePOs}</h3>
-              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-tight">Active POs</p>
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3.5 flex items-center transition-all hover:shadow-md">
-            <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center mr-3 flex-shrink-0">
-              <AlertTriangle className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-none mb-0.5">{analytics.actionRequiredPOs}</h3>
-              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-tight">Action Required</p>
+              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-tight">Total Active</p>
             </div>
           </div>
           

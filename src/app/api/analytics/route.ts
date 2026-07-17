@@ -17,9 +17,9 @@ export async function GET() {
     const poWhereClause = isCustomer ? { customerId } : {}
     const shipmentWhereClause = isCustomer ? { purchaseOrder: { customerId } } : {}
 
-    // 1. Total Active POs (NEW, PARTIALLY_COMPLETED)
+    // 1. Total Active POs (NEW, PARTIALLY_COMPLETED, ACTION_REQUIRED)
     const activePOs = await prisma.purchaseOrder.count({
-      where: { ...poWhereClause, overallStatus: { notIn: ['COMPLETED', 'ACTION_REQUIRED'] } }
+      where: { ...poWhereClause, overallStatus: { not: 'COMPLETED' } }
     })
 
     // 2. Shipment Rejection Rate
