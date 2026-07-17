@@ -130,12 +130,6 @@ export function CustomerDashboardClient({ initialData, customerId }: { initialDa
           Active ({counts.ACTIVE})
         </button>
         <button 
-          onClick={() => setActiveTab('ACTION_REQUIRED')}
-          className={`h-full flex items-center justify-center px-4 rounded-md text-sm font-medium transition-colors ${activeTab === 'ACTION_REQUIRED' ? 'bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
-        >
-          Action Required ({counts.ACTION_REQUIRED})
-        </button>
-        <button 
           onClick={() => setActiveTab('COMPLETED')}
           className={`h-full flex items-center justify-center px-4 rounded-md text-sm font-medium transition-colors ${activeTab === 'COMPLETED' ? 'bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
         >
@@ -169,10 +163,10 @@ export function CustomerDashboardClient({ initialData, customerId }: { initialDa
             <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 border-dashed">
               <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-slate-900 dark:text-white">
-                {searchQuery ? `No ${activeTab === 'ACTIVE' ? 'Active' : activeTab === 'ACTION_REQUIRED' ? 'Action Required' : 'Completed'} Purchase Orders match your search` : `No ${activeTab === 'ACTIVE' ? 'Active' : activeTab === 'ACTION_REQUIRED' ? 'Action Required' : 'Completed'} Purchase Orders yet`}
+                {searchQuery ? `No ${activeTab === 'ACTIVE' ? 'Active' : 'Completed'} Purchase Orders match your search` : `No ${activeTab === 'ACTIVE' ? 'Active' : 'Completed'} Purchase Orders yet`}
               </h3>
               <p className="text-slate-500 mt-1">
-                {searchQuery ? 'Try adjusting your search terms.' : activeTab === 'ACTIVE' ? 'Waiting for DDAPL to create new POs.' : activeTab === 'ACTION_REQUIRED' ? 'POs needing your approval will appear here.' : 'Completed POs will appear here.'}
+                {searchQuery ? 'Try adjusting your search terms.' : activeTab === 'ACTIVE' ? 'Waiting for DDAPL to create new POs.' : 'Completed POs will appear here.'}
               </p>
             </div>
           )}

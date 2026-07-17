@@ -20,15 +20,15 @@ export default async function CustomerDashboard() {
     take: limit,
     where: { 
       customerId,
-      overallStatus: { notIn: ['COMPLETED', 'ACTION_REQUIRED'] }
+      overallStatus: { not: 'COMPLETED' }
     },
     include: { shipments: true },
     orderBy: { uploadDate: 'desc' }
   })
   
   const [activeCount, actionRequiredCount, completedCount] = await Promise.all([
-    prisma.purchaseOrder.count({ where: { customerId, overallStatus: { notIn: ['COMPLETED', 'ACTION_REQUIRED'] } } }),
-    prisma.purchaseOrder.count({ where: { customerId, overallStatus: 'ACTION_REQUIRED' } }),
+    prisma.purchaseOrder.count({ where: { customerId, overallStatus: { not: 'COMPLETED' } } }),
+    Promise.resolve(0),
     prisma.purchaseOrder.count({ where: { customerId, overallStatus: 'COMPLETED' } })
   ])
   

@@ -63,22 +63,50 @@ export async function GET(request: Request) {
     // Capture base where clause before applying the tab filter for counting
     const baseWhere = { ...queryOptions.where }
 
-    if (tab === 'ACTION_REQUIRED') {
-      queryOptions.where.overallStatus = 'ACTION_REQUIRED'
-    } else if (tab === 'COMPLETED') {
-      queryOptions.where.overallStatus = 'COMPLETED'
-    } else if (tab === 'ACTIVE') {
-      queryOptions.where.overallStatus = { notIn: ['COMPLETED', 'ACTION_REQUIRED'] }
+    if (role === 'CUSTOMER') {
+      if (tab === 'ACTION_REQUIRED') {
+        queryOptions.where.id = 'NONE_WILL_MATCH'
+      } else if (tab === 'COMPLETED') {
+        queryOptions.where.overallStatus = 'COMPLETED'
+      } else if (tab === 'ACTIVE') {
+        queryOptions.where.overallStatus = { not: 'COMPLETED' }
+      }
+    } else {
+      if (tab === 'ACTION_REQUIRED') {
+        queryOptions.where.overallStatus = 'ACTION_REQUIRED'
+      } else if (tab === 'COMPLETED') {
+        queryOptions.where.overallStatus = 'COMPLETED'
+      } else if (tab === 'ACTIVE') {
+        queryOptions.where.overallStatus = { notIn: ['COMPLETED', 'ACTION_REQUIRED'] }
+      }
     }
 
     const pos = await prisma.purchaseOrder.findMany(queryOptions)
     
     // Fetch counts for tabs
-    const [activeCount, actionRequiredCount, completedCount] = await Promise.all([
-      prisma.purchaseOrder.count({ where: { ...baseWhere, overallStatus: { notIn: ['COMPLETED', 'ACTION_REQUIRED'] } } }),
-      prisma.purchaseOrder.count({ where: { ...baseWhere, overallStatus: 'ACTION_REQUIRED' } }),
-      prisma.purchaseOrder.count({ where: { ...baseWhere, overallStatus: 'COMPLETED' } })
-    ])
+    let activeCount = 0
+    let actionRequiredCount = 0
+    let completedCount = 0
+
+    if (role === 'CUSTOMER') {
+      const counts = await Promise.all([
+        prisma.purchaseOrder.count({ where: { ...baseWhere, overallStatus: { not: 'COMPLETED' } } }),
+        Promise.resolve(0),
+        prisma.purchaseOrder.count({ where: { ...baseWhere, overallStatus: 'COMPLETED' } })
+      ])
+      activeCount = counts[0]
+      actionRequiredCount = counts[1]
+      completedCount = counts[2]
+    } else {
+      const counts = await Promise.all([
+        prisma.purchaseOrder.count({ where: { ...baseWhere, overallStatus: { notIn: ['COMPLETED', 'ACTION_REQUIRED'] } } }),
+        prisma.purchaseOrder.count({ where: { ...baseWhere, overallStatus: 'ACTION_REQUIRED' } }),
+        prisma.purchaseOrder.count({ where: { ...baseWhere, overallStatus: 'COMPLETED' } })
+      ])
+      activeCount = counts[0]
+      actionRequiredCount = counts[1]
+      completedCount = counts[2]
+    }
     
     let nextCursor = null
     if (pos.length === limit) {
