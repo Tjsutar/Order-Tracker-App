@@ -64,27 +64,29 @@ export async function GET(request: Request) {
     // Capture base where clause before applying the tab filter for counting
     const baseWhere = { ...queryOptions.where }
 
-    if (tab === 'HISTORY') {
-      if (status && status !== 'ALL') {
-        queryOptions.where.overallStatus = status
+    if (!search) {
+      if (tab === 'HISTORY') {
+        if (status && status !== 'ALL') {
+          queryOptions.where.overallStatus = status
+        } else {
+          queryOptions.where.overallStatus = { in: ['COMPLETED', 'ACTION_REQUIRED'] }
+        }
+      } else if (role === 'CUSTOMER') {
+        if (tab === 'ACTION_REQUIRED') {
+          queryOptions.where.id = 'NONE_WILL_MATCH'
+        } else if (tab === 'COMPLETED') {
+          queryOptions.where.overallStatus = 'COMPLETED'
+        } else if (tab === 'ACTIVE') {
+          queryOptions.where.overallStatus = { not: 'COMPLETED' }
+        }
       } else {
-        queryOptions.where.overallStatus = { in: ['COMPLETED', 'ACTION_REQUIRED'] }
-      }
-    } else if (role === 'CUSTOMER') {
-      if (tab === 'ACTION_REQUIRED') {
-        queryOptions.where.id = 'NONE_WILL_MATCH'
-      } else if (tab === 'COMPLETED') {
-        queryOptions.where.overallStatus = 'COMPLETED'
-      } else if (tab === 'ACTIVE') {
-        queryOptions.where.overallStatus = { not: 'COMPLETED' }
-      }
-    } else {
-      if (tab === 'ACTION_REQUIRED') {
-        queryOptions.where.overallStatus = { not: 'COMPLETED' }
-      } else if (tab === 'COMPLETED') {
-        queryOptions.where.overallStatus = 'COMPLETED'
-      } else if (tab === 'ACTIVE') {
-        queryOptions.where.id = 'NONE_WILL_MATCH'
+        if (tab === 'ACTION_REQUIRED') {
+          queryOptions.where.overallStatus = { not: 'COMPLETED' }
+        } else if (tab === 'COMPLETED') {
+          queryOptions.where.overallStatus = 'COMPLETED'
+        } else if (tab === 'ACTIVE') {
+          queryOptions.where.id = 'NONE_WILL_MATCH'
+        }
       }
     }
 
